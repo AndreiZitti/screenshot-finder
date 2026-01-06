@@ -1,19 +1,17 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 
 let genAI: GoogleGenerativeAI | null = null;
-let model: GenerativeModel | null = null;
+let searchModel: GenerativeModel | null = null;
 
-function getModel(): GenerativeModel {
-  if (!model) {
+function getSearchModel(): GenerativeModel {
+  if (!searchModel) {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    model = genAI.getGenerativeModel({
+    searchModel = genAI.getGenerativeModel({
       model: 'gemini-2.0-flash',
-      generationConfig: {
-        responseMimeType: 'application/json',
-      },
+      tools: [{ googleSearch: {} } as never],
     });
   }
-  return model;
+  return searchModel;
 }
 
 export interface SeriesInfo {
@@ -25,23 +23,33 @@ export interface SeriesInfo {
 }
 
 export async function getSeriesInfo(seriesName: string): Promise<SeriesInfo> {
-  const geminiModel = getModel();
+  const model = getSearchModel();
 
-  const prompt = `You are a TV/movie expert. Provide information about "${seriesName}":
-1. A brief synopsis (2-3 sentences)
-2. Rating (e.g., "8.5/10 IMDb" or "92% Rotten Tomatoes")
-3. Number of seasons (or "Movie" if it's a film)
-4. Genre(s)
-5. Where to watch (common streaming platforms like Netflix, HBO Max, Amazon Prime, Hulu, Disney+, etc.)
+  const prompt = `Search the web for "${seriesName}" (could be a TV series, movie, anime, or web series).
 
-Return as JSON with these exact keys: synopsis, rating, seasons, genre, where_to_watch
-If you cannot find information, use "Unknown" for that field.`;
+Look up information about this title and provide:
+1. Synopsis: A brief 2-3 sentence description of the plot
+2. Rating: The rating from IMDb, MyAnimeList, Rotten Tomatoes, or similar (e.g., "8.5/10 IMDb")
+3. Seasons: Number of seasons, or "Movie" if it's a film, or "OVA/Special" for anime specials
+4. Genre: The genre(s)
+5. Where to watch: Streaming platforms where it's available (Netflix, Crunchyroll, Amazon Prime, etc.)
 
-  const result = await geminiModel.generateContent(prompt);
+IMPORTANT: You MUST search the web to find this information. Do not rely on your training data.
 
+Respond with ONLY a JSON object in this exact format, no other text:
+{"synopsis": "...", "rating": "...", "seasons": "...", "genre": "...", "where_to_watch": "..."}
+
+If you truly cannot find any information after searching, use "Unknown" for that field.`;
+
+  const result = await model.generateContent(prompt);
   const text = result.response.text();
 
   try {
+    // Extract JSON from the response (in case there's extra text)
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
     return JSON.parse(text);
   } catch {
     return {

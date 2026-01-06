@@ -16,10 +16,12 @@ export default function UserMenu() {
 
   useEffect(() => {
     const getUser = async () => {
+      // Use getSession() instead of getUser() to avoid triggering token refresh
+      // The middleware handles token refresh; client should use cached session
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
       setLoading(false);
     };
     getUser();

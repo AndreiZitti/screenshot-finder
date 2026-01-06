@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractSeriesName } from '@/lib/groq';
-import { getSeriesInfo } from '@/lib/gemini';
+import { extractName } from '@/lib/groq';
+import { getDiscoveryInfo } from '@/lib/gemini';
 import { supabase } from '@/lib/supabase';
-import { Series } from '@/types/series';
+import { Discovery, DiscoveryType } from '@/types/discovery';
 
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const images = formData.getAll('images') as File[];
+    const type = (formData.get('type') as DiscoveryType) || 'series';
 
     if (images.length === 0) {
       return NextResponse.json(
@@ -16,32 +17,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const results: Series[] = [];
+    const results: Discovery[] = [];
 
     for (const image of images) {
       const buffer = await image.arrayBuffer();
       const base64 = Buffer.from(buffer).toString('base64');
 
-      // Extract series name from image using Groq
-      const seriesName = await extractSeriesName(base64);
+      // Extract name from image using Groq
+      const name = await extractName(base64, type);
 
-      if (seriesName === 'Unknown') {
+      if (name === 'Unknown') {
         continue;
       }
 
-      // Get detailed info using Gemini with grounding
-      const info = await getSeriesInfo(seriesName);
+      // Get detailed info using Gemini with web search
+      const info = await getDiscoveryInfo(name, type);
 
       // Save to Supabase
       const { data, error } = await supabase
-        .from('series')
+        .from('discoveries')
         .insert({
-          name: seriesName,
-          synopsis: info.synopsis,
-          rating: info.rating,
-          seasons: info.seasons,
-          genre: info.genre,
-          where_to_watch: info.where_to_watch,
+          type,
+          name,
+          description: info.description,
+          link: info.link,
+          metadata: info.metadata,
         })
         .select()
         .single();

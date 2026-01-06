@@ -6,8 +6,8 @@ import Header from '@/components/Header';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Series Finder',
-  description: 'Upload screenshots to identify TV series and movies',
+  title: 'Finder',
+  description: 'Upload screenshots to discover series, APIs, gadgets, and more',
 };
 
 export default function RootLayout({

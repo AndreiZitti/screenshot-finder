@@ -1,13 +1,22 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Series } from '@/types/series';
-import SeriesCard from './SeriesCard';
+import { Discovery, DiscoveryType, DISCOVERY_TYPES } from '@/types/discovery';
+import DiscoveryCard from './DiscoveryCard';
+
+const TYPE_ICONS: Record<DiscoveryType, string> = {
+  series: '📺',
+  api_library: '📦',
+  ai_tip: '🤖',
+  gadget: '🔌',
+  other: '📌',
+};
 
 export default function UploadZone() {
+  const [selectedType, setSelectedType] = useState<DiscoveryType>('series');
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<Series[]>([]);
+  const [results, setResults] = useState<Discovery[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const handleFiles = useCallback(async (files: FileList) => {
@@ -18,6 +27,7 @@ export default function UploadZone() {
     Array.from(files).forEach((file) => {
       formData.append('images', file);
     });
+    formData.append('type', selectedType);
 
     try {
       const response = await fetch('/api/analyze', {
@@ -37,7 +47,7 @@ export default function UploadZone() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedType]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -71,6 +81,26 @@ export default function UploadZone() {
 
   return (
     <div className="space-y-6">
+      {/* Type Selector */}
+      <div className="flex items-center justify-center gap-3">
+        <label htmlFor="type-select" className="text-sm font-medium text-gray-700">
+          Looking for:
+        </label>
+        <select
+          id="type-select"
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value as DiscoveryType)}
+          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+        >
+          {DISCOVERY_TYPES.map((type) => (
+            <option key={type.value} value={type.value}>
+              {TYPE_ICONS[type.value]} {type.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Upload Zone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -91,7 +121,7 @@ export default function UploadZone() {
         />
 
         <div className="space-y-2">
-          <div className="text-4xl">📺</div>
+          <div className="text-4xl">{TYPE_ICONS[selectedType]}</div>
           <p className="text-lg font-medium text-gray-900">
             {isLoading ? 'Analyzing...' : 'Drop screenshots here'}
           </p>
@@ -119,8 +149,8 @@ export default function UploadZone() {
             Results ({results.length})
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {results.map((series) => (
-              <SeriesCard key={series.id} series={series} />
+            {results.map((discovery) => (
+              <DiscoveryCard key={discovery.id} discovery={discovery} />
             ))}
           </div>
         </div>

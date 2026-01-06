@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+import { DiscoveryType } from '@/types/discovery';
 
 let groqClient: Groq | null = null;
 
@@ -11,7 +12,15 @@ function getGroqClient(): Groq {
   return groqClient;
 }
 
-export async function extractSeriesName(imageBase64: string): Promise<string> {
+const TYPE_PROMPTS: Record<DiscoveryType, string> = {
+  series: 'Identify the TV show, movie, or anime title shown',
+  api_library: 'Identify any programming library, API, SDK, or framework mentioned',
+  ai_tip: 'Identify the AI technique, prompt pattern, tool, or workflow shown',
+  gadget: 'Identify the tech product, device, or hardware shown',
+  other: 'Identify the main subject, product, or concept shown',
+};
+
+export async function extractName(imageBase64: string, type: DiscoveryType): Promise<string> {
   const groq = getGroqClient();
 
   const response = await groq.chat.completions.create({
@@ -22,7 +31,9 @@ export async function extractSeriesName(imageBase64: string): Promise<string> {
         content: [
           {
             type: 'text',
-            text: 'Look at this screenshot and identify the TV series or movie shown. Return ONLY the exact name of the series/movie, nothing else. If you cannot identify it, return "Unknown".',
+            text: `You are analyzing a screenshot. ${TYPE_PROMPTS[type]}.
+
+Return ONLY the exact name, nothing else. If you cannot identify it, return "Unknown".`,
           },
           {
             type: 'image_url',

@@ -11,7 +11,7 @@ export default function Header() {
       <div className="mx-auto max-w-5xl px-4 py-4">
         <nav className="flex items-center justify-between">
           <Link href="/" className="text-xl font-semibold text-gray-900">
-            Series Finder
+            Finder
           </Link>
           <div className="flex gap-6">
             <Link

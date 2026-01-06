@@ -9,14 +9,14 @@ export async function DELETE(
     const { id } = await params;
 
     const { error } = await supabase
-      .from('series')
+      .from('discoveries')
       .delete()
       .eq('id', id);
 
     if (error) {
       console.error('Supabase delete error:', error);
       return NextResponse.json(
-        { error: 'Failed to delete series' },
+        { error: 'Failed to delete discovery' },
         { status: 500 }
       );
     }
@@ -25,7 +25,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Delete error:', error);
     return NextResponse.json(
-      { error: 'Failed to delete series' },
+      { error: 'Failed to delete discovery' },
       { status: 500 }
     );
   }

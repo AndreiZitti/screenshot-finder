@@ -5,6 +5,8 @@ import { Discovery, DiscoveryType, DISCOVERY_TYPES } from '@/types/discovery';
 import DiscoveryCard from './DiscoveryCard';
 import VoiceRecorder from './VoiceRecorder';
 import TranscriptionPreview from './TranscriptionPreview';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
+import PendingCaptures from './PendingCaptures';
 
 const TYPE_ICONS: Record<DiscoveryType, string> = {
   series: '📺',
@@ -30,6 +32,15 @@ export default function CaptureZone() {
   // Transcription state
   const [transcription, setTranscription] = useState<string | null>(null);
 
+  const {
+    isOnline,
+    pendingCaptures,
+    isSyncing,
+    addPendingCapture,
+    removePendingCapture,
+    retryCapture,
+  } = useOfflineQueue();
+
   // Handle image files
   const handleFiles = useCallback((files: FileList) => {
     const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
@@ -42,6 +53,16 @@ export default function CaptureZone() {
 
   // Analyze images
   const analyzeImages = async () => {
+    // If offline, save to queue
+    if (!isOnline) {
+      for (const file of previewImages) {
+        await addPendingCapture('image', file, selectedType);
+      }
+      setPreviewImages([]);
+      setMode('idle');
+      return;
+    }
+
     setIsProcessing(true);
     setError(null);
 
@@ -189,6 +210,12 @@ export default function CaptureZone() {
 
   return (
     <div className="space-y-6">
+      {!isOnline && (
+        <div className="rounded-lg bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">
+          You're offline. Captures will sync when connected.
+        </div>
+      )}
+
       {/* Main Capture Area */}
       {mode === 'idle' && (
         <>
@@ -316,6 +343,14 @@ export default function CaptureZone() {
           {error}
         </div>
       )}
+
+      {/* Pending Captures */}
+      <PendingCaptures
+        captures={pendingCaptures}
+        isSyncing={isSyncing}
+        onRetry={retryCapture}
+        onDelete={removePendingCapture}
+      />
 
       {/* Results */}
       {results.length > 0 && (

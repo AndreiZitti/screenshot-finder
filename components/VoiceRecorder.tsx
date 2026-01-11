@@ -81,7 +81,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
         <button
           onClick={startRecording}
           disabled={disabled}
-          className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+          className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-4 sm:py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -112,7 +112,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
           </div>
           <button
             onClick={handleStopAndPreview}
-            className="flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            className="flex items-center gap-2 rounded-full bg-red-600 px-6 py-4 sm:py-3 text-sm font-medium text-white transition-colors hover:bg-red-700"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -141,7 +141,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
 
       {/* Preview state - playback before transcribing */}
       {state === 'stopped' && audioUrl && !isTranscribing && (
-        <div className="flex flex-col items-center gap-4 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="flex flex-col items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 w-full sm:w-auto">
           <p className="text-sm font-medium text-gray-700">Preview your recording:</p>
 
           <audio

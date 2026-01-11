@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
     const body = await request.json();
 
@@ -14,7 +15,7 @@ export async function PATCH(
       const archived_at = body.archived ? new Date().toISOString() : null;
 
       const { data, error } = await supabase
-        .from('discoveries')
+        .from('notes')
         .update({ archived_at })
         .eq('id', id)
         .select()
@@ -23,12 +24,12 @@ export async function PATCH(
       if (error) {
         console.error('Supabase archive error:', error);
         return NextResponse.json(
-          { error: 'Failed to update discovery' },
+          { error: 'Failed to update note' },
           { status: 500 }
         );
       }
 
-      return NextResponse.json({ discovery: data });
+      return NextResponse.json({ note: data });
     }
 
     return NextResponse.json(
@@ -38,7 +39,7 @@ export async function PATCH(
   } catch (error) {
     console.error('Update error:', error);
     return NextResponse.json(
-      { error: 'Failed to update discovery' },
+      { error: 'Failed to update note' },
       { status: 500 }
     );
   }
@@ -49,17 +50,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const supabase = await createClient();
     const { id } = await params;
 
     const { error } = await supabase
-      .from('discoveries')
+      .from('notes')
       .delete()
       .eq('id', id);
 
     if (error) {
       console.error('Supabase delete error:', error);
       return NextResponse.json(
-        { error: 'Failed to delete discovery' },
+        { error: 'Failed to delete note' },
         { status: 500 }
       );
     }
@@ -68,7 +70,7 @@ export async function DELETE(
   } catch (error) {
     console.error('Delete error:', error);
     return NextResponse.json(
-      { error: 'Failed to delete discovery' },
+      { error: 'Failed to delete note' },
       { status: 500 }
     );
   }

@@ -5,10 +5,10 @@ export default function Home() {
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">
-          Discover Anything
+          Capture
         </h1>
         <p className="mt-2 text-gray-600">
-          Upload a screenshot and we&apos;ll find it for you
+          Drop a screenshot or record a voice note
         </p>
       </div>
       <UploadZone />

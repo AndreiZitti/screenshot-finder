@@ -6,8 +6,8 @@ import Header from '@/components/Header';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Finder',
-  description: 'Upload screenshots to discover series, APIs, gadgets, and more',
+  title: 'z-stash',
+  description: 'Capture knowledge and ideas from screenshots and voice notes',
 };
 
 export default function RootLayout({

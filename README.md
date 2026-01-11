@@ -2,9 +2,9 @@
 
 ![header](https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=12&height=120&section=header&animation=fadeIn)
 
-# Series Finder
+# z-stash
 
-_Upload a screenshot and AI identifies what you're looking at_
+_Capture knowledge and ideas from screenshots and voice notes_
 
 ![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
@@ -16,10 +16,14 @@ _Upload a screenshot and AI identifies what you're looking at_
 ## How it works
 
 ```
-[Upload Screenshot] → [Groq: Extract Name] → [Gemini: Search & Enrich] → [Save to Supabase]
+[Screenshot/Voice Note] → [AI Analysis] → [Web Search Enrichment] → [Save to Library]
 ```
 
-Supports multiple discovery types:
+**Input methods:**
+- **Screenshots** — AI identifies what you're looking at and researches it
+- **Voice notes** — Transcribe and save as a note, or research what you mentioned
+
+**Discovery types:**
 - **Series / Media** — TV shows, movies, anime
 - **API / Library** — Programming libraries, SDKs, frameworks
 - **AI Tips** — Prompts, techniques, workflows
@@ -33,13 +37,14 @@ Supports multiple discovery types:
 | Styling | Tailwind CSS |
 | Database | Supabase |
 | Image Analysis | Groq (Llama 4 Scout) |
+| Transcription | Groq (Whisper Large v3 Turbo) |
 | Web Search | Gemini 2.5 Flash + Grounding |
 
 ## Getting Started
 
 ```bash
-git clone https://github.com/AndreiZitti/series-finder.git
-cd series-finder
+git clone https://github.com/AndreiZitti/z-stash.git
+cd z-stash
 npm install
 cp .env.example .env.local
 npm run dev

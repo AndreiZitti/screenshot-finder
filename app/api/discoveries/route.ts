@@ -1,12 +1,26 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabase
+    const searchParams = request.nextUrl.searchParams;
+    const archived = searchParams.get('archived');
+
+    let query = supabase
       .from('discoveries')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Filter by archived status
+    if (archived === 'true') {
+      query = query.not('archived_at', 'is', null);
+    } else if (archived === 'false' || archived === null) {
+      // Default: show only active (non-archived) items
+      query = query.is('archived_at', null);
+    }
+    // archived === 'all' returns everything
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Supabase fetch error:', error);

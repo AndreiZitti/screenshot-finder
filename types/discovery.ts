@@ -9,6 +9,7 @@ export interface Discovery {
   metadata: Record<string, string | null> | null;
   image_url: string | null;
   created_at: string;
+  archived_at: string | null;
 }
 
 export interface DiscoveryInfo {

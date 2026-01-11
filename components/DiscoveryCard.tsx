@@ -109,7 +109,7 @@ export default function DiscoveryCard({ discovery, onDelete, onArchive, showArch
               <button
                 onClick={handleArchive}
                 disabled={isArchiving}
-                className="shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
                 title={discovery.archived_at ? 'Restore from archive' : 'Archive'}
               >
                 <svg
@@ -131,7 +131,7 @@ export default function DiscoveryCard({ discovery, onDelete, onArchive, showArch
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="shrink-0 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+              className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
               title="Delete from library"
             >
               <svg

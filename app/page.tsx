@@ -1,4 +1,4 @@
-import UploadZone from '@/components/UploadZone';
+import CaptureZone from '@/components/CaptureZone';
 
 export default function Home() {
   return (
@@ -11,7 +11,7 @@ export default function Home() {
           Drop a screenshot or record a voice note
         </p>
       </div>
-      <UploadZone />
+      <CaptureZone />
     </div>
   );
 }

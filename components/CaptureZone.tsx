@@ -197,7 +197,7 @@ export default function CaptureZone() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
+            className={`relative rounded-lg border-2 border-dashed p-6 sm:p-12 text-center transition-colors ${
               isDragging
                 ? 'border-gray-900 bg-gray-50'
                 : 'border-gray-300 hover:border-gray-400'
@@ -244,7 +244,7 @@ export default function CaptureZone() {
                 <img
                   src={URL.createObjectURL(file)}
                   alt={`Preview ${index + 1}`}
-                  className="h-24 w-24 rounded-lg object-cover"
+                  className="h-16 w-16 sm:h-24 sm:w-24 rounded-lg object-cover"
                 />
                 <button
                   onClick={() => removeImage(index)}
@@ -282,14 +282,14 @@ export default function CaptureZone() {
             <button
               onClick={cancelImagePreview}
               disabled={isProcessing}
-              className="rounded-lg px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+              className="rounded-lg px-6 py-3 sm:py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               onClick={analyzeImages}
               disabled={isProcessing}
-              className="rounded-lg bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+              className="rounded-lg bg-gray-900 px-6 py-3 sm:py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {isProcessing ? 'Analyzing...' : 'Analyze'}
             </button>

@@ -66,10 +66,10 @@ function LibraryContent() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:justify-center sm:overflow-x-visible sm:pb-0">
         <button
           onClick={() => setFilter('all')}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+          className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             activeFilter === 'all'
               ? 'bg-gray-900 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -83,7 +83,7 @@ function LibraryContent() {
             <button
               key={type.value}
               onClick={() => setFilter(type.value)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                 activeFilter === type.value
                   ? 'bg-gray-900 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

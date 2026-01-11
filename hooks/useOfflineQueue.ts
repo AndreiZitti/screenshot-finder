@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   PendingCapture,
   getAllPendingCaptures,
@@ -14,6 +14,7 @@ export function useOfflineQueue() {
   const [pendingCaptures, setPendingCaptures] = useState<PendingCapture[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
+  const syncScheduledRef = useRef(false);
 
   // Track online status
   useEffect(() => {
@@ -149,10 +150,13 @@ export function useOfflineQueue() {
 
   // Auto-sync when coming back online
   useEffect(() => {
-    if (isOnline && pendingCount > 0) {
-      syncAll();
+    if (isOnline && pendingCount > 0 && !syncScheduledRef.current) {
+      syncScheduledRef.current = true;
+      syncAll().finally(() => {
+        syncScheduledRef.current = false;
+      });
     }
-  }, [isOnline]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOnline, pendingCount, syncAll]);
 
   return {
     isOnline,

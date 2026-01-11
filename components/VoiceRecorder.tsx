@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 
 interface VoiceRecorderProps {
@@ -20,18 +20,26 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
   };
 
   // When audioBlob changes, create URL for playback
-  if (audioBlob && !audioUrl && state === 'stopped') {
-    setAudioUrl(URL.createObjectURL(audioBlob));
-  }
+  useEffect(() => {
+    if (audioBlob && state === 'stopped' && !audioUrl) {
+      setAudioUrl(URL.createObjectURL(audioBlob));
+    }
+  }, [audioBlob, state, audioUrl]);
+
+  // Clean up object URL to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
 
   const handleConfirmAndTranscribe = async () => {
     if (!audioBlob) return;
 
     setIsTranscribing(true);
     try {
-      console.log('Audio blob size:', audioBlob.size, 'bytes');
-      console.log('Audio blob type:', audioBlob.type);
-
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
@@ -45,7 +53,6 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
       }
 
       const data = await response.json();
-      console.log('Transcription result:', data.transcription);
       onTranscription(data.transcription);
     } catch (err) {
       console.error('Transcription error:', err);

@@ -111,7 +111,7 @@ export default function NoteCard({ note, onDelete, onArchive }: NoteCardProps) {
           <button
             onClick={handleArchive}
             disabled={isArchiving}
-            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+            className="rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
             title={note.archived_at ? 'Restore from archive' : 'Archive'}
           >
             <svg
@@ -132,7 +132,7 @@ export default function NoteCard({ note, onDelete, onArchive }: NoteCardProps) {
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+            className="rounded p-2 sm:p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
             title="Delete"
           >
             <svg

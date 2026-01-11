@@ -13,7 +13,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('Received audio file:', audio.name, audio.size, 'bytes', audio.type);
+
     const transcription = await transcribeAudio(audio);
+
+    console.log('Transcription result:', transcription);
 
     return NextResponse.json({ transcription });
   } catch (error) {

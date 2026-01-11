@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useRef } from 'react';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 
 interface VoiceRecorderProps {
@@ -11,40 +11,58 @@ interface VoiceRecorderProps {
 export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecorderProps) {
   const { state, audioBlob, duration, error, startRecording, stopRecording, reset } = useVoiceRecorder();
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Handle transcription when recording stops
-  useEffect(() => {
-    if (state === 'stopped' && audioBlob && !isTranscribing) {
-      setIsTranscribing(true);
+  // Create audio URL when blob is ready
+  const handleStopAndPreview = () => {
+    stopRecording();
+  };
 
-      const transcribe = async () => {
-        try {
-          const formData = new FormData();
-          formData.append('audio', audioBlob, 'recording.webm');
+  // When audioBlob changes, create URL for playback
+  if (audioBlob && !audioUrl && state === 'stopped') {
+    setAudioUrl(URL.createObjectURL(audioBlob));
+  }
 
-          const response = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData,
-          });
+  const handleConfirmAndTranscribe = async () => {
+    if (!audioBlob) return;
 
-          if (!response.ok) {
-            throw new Error('Transcription failed');
-          }
+    setIsTranscribing(true);
+    try {
+      console.log('Audio blob size:', audioBlob.size, 'bytes');
+      console.log('Audio blob type:', audioBlob.type);
 
-          const data = await response.json();
-          onTranscription(data.transcription);
-        } catch (err) {
-          console.error('Transcription error:', err);
-          alert('Failed to transcribe recording');
-        } finally {
-          setIsTranscribing(false);
-          reset();
-        }
-      };
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
 
-      transcribe();
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Transcription failed');
+      }
+
+      const data = await response.json();
+      console.log('Transcription result:', data.transcription);
+      onTranscription(data.transcription);
+    } catch (err) {
+      console.error('Transcription error:', err);
+      alert('Failed to transcribe recording');
+    } finally {
+      setIsTranscribing(false);
+      handleReset();
     }
-  }, [state, audioBlob, isTranscribing, onTranscription, reset]);
+  };
+
+  const handleReset = () => {
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+    reset();
+  };
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -52,14 +70,13 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const showTranscribing = state === 'stopped' || isTranscribing;
-
   return (
     <div className="flex flex-col items-center gap-3">
       {error && (
         <p className="text-sm text-red-600">{error}</p>
       )}
 
+      {/* Idle state - show record button */}
       {state === 'idle' && !isTranscribing && (
         <button
           onClick={startRecording}
@@ -84,6 +101,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
         </button>
       )}
 
+      {/* Recording state */}
       {state === 'recording' && (
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-3">
@@ -93,7 +111,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
             </span>
           </div>
           <button
-            onClick={stopRecording}
+            onClick={handleStopAndPreview}
             className="flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700"
           >
             <svg
@@ -121,7 +139,37 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
         </div>
       )}
 
-      {showTranscribing && (
+      {/* Preview state - playback before transcribing */}
+      {state === 'stopped' && audioUrl && !isTranscribing && (
+        <div className="flex flex-col items-center gap-4 rounded-lg border border-gray-200 bg-white p-4">
+          <p className="text-sm font-medium text-gray-700">Preview your recording:</p>
+
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            controls
+            className="w-full max-w-xs"
+          />
+
+          <div className="flex gap-2">
+            <button
+              onClick={handleReset}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100"
+            >
+              Re-record
+            </button>
+            <button
+              onClick={handleConfirmAndTranscribe}
+              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              Transcribe
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Transcribing state */}
+      {isTranscribing && (
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
           <span className="text-sm text-gray-600">Transcribing...</span>

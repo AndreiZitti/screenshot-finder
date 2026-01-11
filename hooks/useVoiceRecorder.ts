@@ -33,6 +33,13 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
+      // Debug: check audio tracks
+      const audioTracks = stream.getAudioTracks();
+      console.log('Audio tracks:', audioTracks.length);
+      audioTracks.forEach((track, i) => {
+        console.log(`Track ${i}:`, track.label, track.enabled, track.muted, track.readyState);
+      });
+
       // Use webm/opus which Whisper accepts
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
@@ -42,6 +49,7 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
       mediaRecorderRef.current = mediaRecorder;
 
       mediaRecorder.ondataavailable = (event) => {
+        console.log('Audio chunk received:', event.data.size, 'bytes');
         if (event.data.size > 0) {
           chunksRef.current.push(event.data);
         }

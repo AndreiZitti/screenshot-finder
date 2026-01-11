@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Capture', icon: 'capture' },
@@ -35,6 +36,7 @@ const Icons = {
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { pendingCount } = useOfflineQueue();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white sm:hidden">
@@ -48,7 +50,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
+              className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
                 isActive
                   ? 'text-gray-900'
                   : 'text-gray-500'
@@ -56,6 +58,11 @@ export default function BottomNav() {
             >
               {Icons[item.icon as keyof typeof Icons]}
               <span>{item.label}</span>
+              {item.icon === 'capture' && pendingCount > 0 && (
+                <span className="absolute right-1/4 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                  {pendingCount > 9 ? '9+' : pendingCount}
+                </span>
+              )}
             </Link>
           );
         })}

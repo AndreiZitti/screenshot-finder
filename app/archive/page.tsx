@@ -80,10 +80,10 @@ function ArchiveContent() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex justify-center gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-2 sm:justify-center sm:overflow-x-visible sm:pb-0">
         <button
           onClick={() => setTab('discoveries')}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+          className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'discoveries'
               ? 'bg-gray-900 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -93,7 +93,7 @@ function ArchiveContent() {
         </button>
         <button
           onClick={() => setTab('notes')}
-          className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+          className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             activeTab === 'notes'
               ? 'bg-gray-900 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

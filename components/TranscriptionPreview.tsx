@@ -29,7 +29,7 @@ export default function TranscriptionPreview({
   const [showCategories, setShowCategories] = useState(false);
 
   return (
-    <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
       <p className="mb-4 text-gray-900">{transcription}</p>
 
       {isProcessing ? (
@@ -43,13 +43,13 @@ export default function TranscriptionPreview({
             <div className="flex gap-2">
               <button
                 onClick={onSaveAsNote}
-                className="flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+                className="flex-1 rounded-lg bg-gray-100 px-4 py-3 sm:py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
               >
                 Save as Note
               </button>
               <button
                 onClick={() => setShowCategories(true)}
-                className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+                className="flex-1 rounded-lg bg-gray-900 px-4 py-3 sm:py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
               >
                 Research This
               </button>
@@ -62,7 +62,7 @@ export default function TranscriptionPreview({
                   <button
                     key={type.value}
                     onClick={() => onResearch(type.value)}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                    className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-3 sm:py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     <span>{TYPE_ICONS[type.value]}</span>
                     {type.label}

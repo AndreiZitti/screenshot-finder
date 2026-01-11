@@ -52,12 +52,16 @@ function LibraryContent() {
     setDiscoveries((prev) => prev.filter((d) => d.id !== id));
   };
 
+  const handleArchive = (id: string) => {
+    setDiscoveries((prev) => prev.filter((d) => d.id !== id));
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900">Your Library</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Discoveries</h1>
         <p className="mt-2 text-gray-600">
-          All your discoveries in one place
+          Things you&apos;ve found and researched
         </p>
       </div>
 
@@ -109,6 +113,7 @@ function LibraryContent() {
               key={discovery.id}
               discovery={discovery}
               onDelete={handleDelete}
+              onArchive={handleArchive}
             />
           ))}
         </div>

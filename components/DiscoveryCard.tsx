@@ -6,6 +6,8 @@ import { Discovery, DiscoveryType, DISCOVERY_TYPE_LABELS } from '@/types/discove
 interface DiscoveryCardProps {
   discovery: Discovery;
   onDelete?: (id: string) => void;
+  onArchive?: (id: string) => void;
+  showArchiveButton?: boolean;
 }
 
 const TYPE_COLORS: Record<DiscoveryType, string> = {
@@ -37,8 +39,31 @@ const METADATA_LABELS: Record<string, string> = {
   where_to_buy: 'Buy at',
 };
 
-export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProps) {
+export default function DiscoveryCard({ discovery, onDelete, onArchive, showArchiveButton = true }: DiscoveryCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
+
+  const handleArchive = async () => {
+    setIsArchiving(true);
+    try {
+      const response = await fetch(`/api/discoveries/${discovery.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archived: !discovery.archived_at }),
+      });
+
+      if (response.ok) {
+        onArchive?.(discovery.id);
+      } else {
+        alert('Failed to archive');
+      }
+    } catch (error) {
+      console.error('Archive error:', error);
+      alert('Failed to archive');
+    } finally {
+      setIsArchiving(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirm(`Delete "${discovery.name}" from your library?`)) {
@@ -79,27 +104,52 @@ export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProp
               {DISCOVERY_TYPE_LABELS[discovery.type]}
             </span>
           </div>
-          <button
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="shrink-0 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
-            title="Delete from library"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex items-center gap-1">
+            {showArchiveButton && (
+              <button
+                onClick={handleArchive}
+                disabled={isArchiving}
+                className="shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+                title={discovery.archived_at ? 'Restore from archive' : 'Archive'}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                  />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="shrink-0 rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+              title="Delete from library"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Name */}

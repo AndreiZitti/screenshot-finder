@@ -23,7 +23,7 @@ export default function Header() {
                   : 'text-gray-500 hover:text-gray-900'
               }`}
             >
-              Upload
+              Capture
             </Link>
             <Link
               href="/library"
@@ -33,7 +33,27 @@ export default function Header() {
                   : 'text-gray-500 hover:text-gray-900'
               }`}
             >
-              Library
+              Discoveries
+            </Link>
+            <Link
+              href="/notes"
+              className={`text-sm font-medium transition-colors ${
+                pathname === '/notes' || pathname.startsWith('/notes')
+                  ? 'text-gray-900'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Notes
+            </Link>
+            <Link
+              href="/archive"
+              className={`text-sm font-medium transition-colors ${
+                pathname === '/archive' || pathname.startsWith('/archive')
+                  ? 'text-gray-900'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Archive
             </Link>
             <UserMenu />
           </div>

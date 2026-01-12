@@ -10,14 +10,37 @@ export default function SettingsPage() {
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [connectedPageName, setConnectedPageName] = useState<string | null>(null);
 
-  // Initialize form with existing settings
+  // Initialize form with existing settings and test connection to get page name
   useEffect(() => {
     if (settings) {
       setApiKey(settings.apiKey);
       setPageUrl(settings.pageId);
+      // Fetch the page name for display
+      fetchPageName(settings);
     }
   }, [settings]);
+
+  const fetchPageName = async (creds: { apiKey: string; pageId: string }) => {
+    try {
+      const response = await fetch('/api/notion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'test',
+          credentials: creds,
+        }),
+      });
+      const result = await response.json();
+      if (result.success && result.pageName) {
+        setConnectedPageName(result.pageName);
+      }
+    } catch {
+      // Silently fail - just won't show page name
+    }
+  };
 
   const handleTest = async () => {
     if (!apiKey || !pageUrl) {
@@ -59,6 +82,9 @@ export default function SettingsPage() {
     if (result.success) {
       setTestStatus('success');
       setTestMessage('Settings saved!');
+      setIsEditing(false);
+      // Refresh page name
+      fetchPageName({ apiKey, pageId: pageUrl });
     }
   };
 
@@ -69,13 +95,75 @@ export default function SettingsPage() {
       setPageUrl('');
       setTestStatus('idle');
       setTestMessage('');
+      setConnectedPageName(null);
+      setIsEditing(false);
     }
+  };
+
+  const handleStartEditing = () => {
+    setIsEditing(true);
+    setTestStatus('idle');
+    setTestMessage('');
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditing(false);
+    if (settings) {
+      setApiKey(settings.apiKey);
+      setPageUrl(settings.pageId);
+    }
+    setTestStatus('idle');
+    setTestMessage('');
   };
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+      </div>
+    );
+  }
+
+  // Show connected state if settings exist and not editing
+  if (hasSettings && !isEditing) {
+    return (
+      <div className="space-y-8">
+        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Notion Integration</h2>
+          
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-100">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-green-800">Connected to Notion</p>
+                <p className="mt-1 text-sm text-green-700 truncate">
+                  {connectedPageName ? `Page: "${connectedPageName}"` : `Page ID: ${settings?.pageId?.slice(0, 8)}...`}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={handleStartEditing}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Change Page
+            </button>
+            <button
+              onClick={handleClear}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Disconnect
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -87,7 +175,7 @@ export default function SettingsPage() {
       <div className="rounded-lg border border-gray-200 bg-white p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">Notion Integration</h2>
         <p className="mb-6 text-sm text-gray-600">
-          Connect your Notion account to send discoveries and notes to a specific page.
+          {hasSettings ? 'Update your Notion connection:' : 'Connect your Notion account to send discoveries and notes to a specific page.'}
         </p>
 
         <div className="space-y-4">
@@ -165,7 +253,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2">
             <button
               onClick={handleTest}
               disabled={!apiKey || !pageUrl || testStatus === 'testing'}
@@ -178,14 +266,14 @@ export default function SettingsPage() {
               disabled={!apiKey || !pageUrl || isSaving}
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving ? 'Saving...' : hasSettings ? 'Update' : 'Save'}
             </button>
-            {hasSettings && (
+            {isEditing && (
               <button
-                onClick={handleClear}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                onClick={handleCancelEditing}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
               >
-                Clear
+                Cancel
               </button>
             )}
           </div>

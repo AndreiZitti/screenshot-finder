@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendToNotion, testNotionConnection, NotionCredentials } from '@/lib/notion';
 
-// Get credentials from env or request body
+// Get credentials - user settings take priority, env vars as fallback
 function getCredentials(bodyCredentials?: Partial<NotionCredentials>): NotionCredentials | null {
-  // Priority: env variables for owner
+  // Priority 1: User-provided credentials (per-user settings)
+  if (bodyCredentials?.apiKey && bodyCredentials?.pageId) {
+    return { apiKey: bodyCredentials.apiKey, pageId: bodyCredentials.pageId };
+  }
+  
+  // Priority 2: Environment variables (owner fallback)
   const envApiKey = process.env.NOTION_API_KEY;
   const envPageId = process.env.NOTION_PAGE_ID;
   
   if (envApiKey && envPageId) {
     return { apiKey: envApiKey, pageId: envPageId };
-  }
-  
-  // Fall back to user-provided credentials
-  if (bodyCredentials?.apiKey && bodyCredentials?.pageId) {
-    return { apiKey: bodyCredentials.apiKey, pageId: bodyCredentials.pageId };
   }
   
   return null;

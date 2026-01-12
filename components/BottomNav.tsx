@@ -39,7 +39,7 @@ export default function BottomNav() {
   const { pendingCount } = useOfflineQueue();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white sm:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden">
       <div className="flex justify-around">
         {NAV_ITEMS.map((item) => {
           const isActive = item.href === '/'

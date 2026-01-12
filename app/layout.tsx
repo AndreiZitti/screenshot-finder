@@ -23,6 +23,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
   themeColor: '#111827',
 };
 
@@ -38,7 +39,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-gray-50 text-gray-900 antialiased`}>
         <Header />
-        <main className="mx-auto max-w-5xl px-4 py-8 pb-24 sm:pb-8">
+        <main className="mx-auto max-w-5xl px-4 py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-8">
           {children}
         </main>
         <BottomNav />

@@ -10,6 +10,7 @@ _Capture knowledge and ideas from screenshots and voice notes_
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind-38bdf8?logo=tailwindcss&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3fcf8e?logo=supabase&logoColor=white)
+![Notion](https://img.shields.io/badge/Notion-000000?logo=notion&logoColor=white)
 
 </div>
 
@@ -29,6 +30,13 @@ _Capture knowledge and ideas from screenshots and voice notes_
 - **AI Tips** — Prompts, techniques, workflows
 - **Tech Gadgets** — Devices, hardware, products
 
+## Features
+
+- **PWA Support** — Install on mobile, works offline with queued captures
+- **Notion Integration** — Send discoveries and notes to a Notion page
+- **Archive** — Move processed items out of your main library
+- **iOS Optimized** — Safe area support for notched iPhones
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -39,6 +47,7 @@ _Capture knowledge and ideas from screenshots and voice notes_
 | Image Analysis | Groq (Llama 4 Scout) |
 | Transcription | Groq (Whisper Large v3 Turbo) |
 | Web Search | Gemini 2.5 Flash + Grounding |
+| Export | Notion API |
 
 ## Getting Started
 
@@ -55,11 +64,28 @@ Open http://localhost:3000
 ## Environment Variables
 
 ```env
+# Required
 GROQ_API_KEY=
 GEMINI_API_KEY=
 NEXT_PUBLIC_SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+# Optional - Notion Integration (per-user settings also available)
+NOTION_API_KEY=
+NOTION_PAGE_ID=
 ```
+
+## Notion Setup
+
+1. Create an integration at [notion.so/my-integrations](https://www.notion.so/my-integrations)
+2. Share your target page with the integration
+3. Either:
+   - Add credentials to `.env.local` (owner default), or
+   - Configure per-user in Settings page
+
+## Database Setup
+
+Run the migrations in `supabase/migrations/` or execute them in the Supabase SQL editor.
 
 ---
 

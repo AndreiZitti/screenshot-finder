@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Discovery, DiscoveryType, DISCOVERY_TYPE_LABELS } from '@/types/discovery';
-import { useSendToNotion } from '@/hooks/useSendToNotion';
+import NotionSendButton from './NotionSendButton';
 
 interface DiscoveryCardProps {
   discovery: Discovery;
@@ -43,16 +43,6 @@ const METADATA_LABELS: Record<string, string> = {
 export default function DiscoveryCard({ discovery, onDelete, onArchive, showArchiveButton = true }: DiscoveryCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
-  const { send: sendToNotion, status: notionStatus } = useSendToNotion();
-
-  const handleSendToNotion = async () => {
-    await sendToNotion({
-      type: 'discovery',
-      name: discovery.name,
-      description: discovery.description || undefined,
-      link: discovery.link || undefined,
-    });
-  };
 
   const handleArchive = async () => {
     setIsArchiving(true);
@@ -139,33 +129,12 @@ export default function DiscoveryCard({ discovery, onDelete, onArchive, showArch
                 </svg>
               </button>
             )}
-            <button
-              onClick={handleSendToNotion}
-              disabled={notionStatus === 'sending'}
-              className={`shrink-0 rounded p-2 sm:p-1 transition-colors disabled:opacity-50 ${
-                notionStatus === 'success'
-                  ? 'text-green-500'
-                  : notionStatus === 'error'
-                  ? 'text-red-500 hover:bg-red-50'
-                  : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
-              }`}
-              title="Send to Notion"
-            >
-              {notionStatus === 'sending' ? (
-                <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
-              ) : notionStatus === 'success' ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                </svg>
-              )}
-            </button>
+            <NotionSendButton
+              type="discovery"
+              name={discovery.name}
+              description={discovery.description || undefined}
+              link={discovery.link || undefined}
+            />
             <button
               onClick={handleDelete}
               disabled={isDeleting}

@@ -3,7 +3,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Discovery, DiscoveryType, DISCOVERY_TYPES, DISCOVERY_TYPE_LABELS } from '@/types/discovery';
+import { Note } from '@/types/note';
 import DiscoveryCard from '@/components/DiscoveryCard';
+import NoteCard from '@/components/NoteCard';
 
 const TYPE_ICONS: Record<DiscoveryType, string> = {
   series: '📺',
@@ -13,30 +15,42 @@ const TYPE_ICONS: Record<DiscoveryType, string> = {
   other: '📌',
 };
 
+type FilterType = 'all' | 'notes' | DiscoveryType;
+
+type StashItem = 
+  | { kind: 'discovery'; data: Discovery }
+  | { kind: 'note'; data: Note };
+
 function LibraryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [discoveries, setDiscoveries] = useState<Discovery[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const activeFilter = (searchParams.get('type') as DiscoveryType | 'all') || 'all';
+  const activeFilter = (searchParams.get('type') as FilterType) || 'all';
 
   useEffect(() => {
-    async function fetchDiscoveries() {
+    async function fetchData() {
       try {
-        const response = await fetch('/api/discoveries');
-        const data = await response.json();
-        setDiscoveries(data.discoveries || []);
+        const [discoveriesRes, notesRes] = await Promise.all([
+          fetch('/api/discoveries'),
+          fetch('/api/notes'),
+        ]);
+        const discoveriesData = await discoveriesRes.json();
+        const notesData = await notesRes.json();
+        setDiscoveries(discoveriesData.discoveries || []);
+        setNotes(notesData.notes || []);
       } catch (error) {
-        console.error('Error fetching discoveries:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchDiscoveries();
+    fetchData();
   }, []);
 
-  const setFilter = (type: DiscoveryType | 'all') => {
+  const setFilter = (type: FilterType) => {
     if (type === 'all') {
       router.push('/library');
     } else {
@@ -44,24 +58,44 @@ function LibraryContent() {
     }
   };
 
-  const filteredDiscoveries = activeFilter === 'all'
-    ? discoveries
-    : discoveries.filter((d) => d.type === activeFilter);
+  // Combine and sort all items by date
+  const allItems: StashItem[] = [
+    ...discoveries.map((d) => ({ kind: 'discovery' as const, data: d })),
+    ...notes.map((n) => ({ kind: 'note' as const, data: n })),
+  ].sort((a, b) => 
+    new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime()
+  );
 
-  const handleDelete = (id: string) => {
+  const filteredItems = activeFilter === 'all'
+    ? allItems
+    : activeFilter === 'notes'
+    ? allItems.filter((item) => item.kind === 'note')
+    : allItems.filter((item) => item.kind === 'discovery' && item.data.type === activeFilter);
+
+  const handleDeleteDiscovery = (id: string) => {
     setDiscoveries((prev) => prev.filter((d) => d.id !== id));
   };
 
-  const handleArchive = (id: string) => {
+  const handleArchiveDiscovery = (id: string) => {
     setDiscoveries((prev) => prev.filter((d) => d.id !== id));
   };
+
+  const handleDeleteNote = (id: string) => {
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const handleArchiveNote = (id: string) => {
+    setNotes((prev) => prev.filter((n) => n.id !== id));
+  };
+
+  const totalCount = discoveries.length + notes.length;
 
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900">Discoveries</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Stash</h1>
         <p className="mt-2 text-gray-600">
-          Things you&apos;ve found and researched
+          Your discoveries and notes
         </p>
       </div>
 
@@ -75,11 +109,27 @@ function LibraryContent() {
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
           }`}
         >
-          All ({discoveries.length})
+          All ({totalCount})
         </button>
-        {DISCOVERY_TYPES.map((type) => {
-          const count = discoveries.filter((d) => d.type === type.value).length;
-          return (
+        {notes.length > 0 && (
+          <button
+            onClick={() => setFilter('notes')}
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              activeFilter === 'notes'
+                ? 'bg-gray-900 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            🎙️ Notes ({notes.length})
+          </button>
+        )}
+        {DISCOVERY_TYPES
+          .map((type) => ({
+            ...type,
+            count: discoveries.filter((d) => d.type === type.value).length,
+          }))
+          .sort((a, b) => b.count - a.count)
+          .map((type) => (
             <button
               key={type.value}
               onClick={() => setFilter(type.value)}
@@ -89,33 +139,41 @@ function LibraryContent() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {TYPE_ICONS[type.value]} {DISCOVERY_TYPE_LABELS[type.value]} ({count})
+              {TYPE_ICONS[type.value]} {DISCOVERY_TYPE_LABELS[type.value]} ({type.count})
             </button>
-          );
-        })}
+          ))}
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
         </div>
-      ) : filteredDiscoveries.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-          <p className="text-gray-500">No discoveries found.</p>
+          <p className="text-gray-500">Nothing here yet.</p>
           <p className="mt-1 text-sm text-gray-400">
-            Upload some screenshots to get started!
+            Capture screenshots or record notes to get started!
           </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredDiscoveries.map((discovery) => (
-            <DiscoveryCard
-              key={discovery.id}
-              discovery={discovery}
-              onDelete={handleDelete}
-              onArchive={handleArchive}
-            />
-          ))}
+          {filteredItems.map((item) =>
+            item.kind === 'discovery' ? (
+              <DiscoveryCard
+                key={`discovery-${item.data.id}`}
+                discovery={item.data}
+                onDelete={handleDeleteDiscovery}
+                onArchive={handleArchiveDiscovery}
+              />
+            ) : (
+              <NoteCard
+                key={`note-${item.data.id}`}
+                note={item.data}
+                onDelete={handleDeleteNote}
+                onArchive={handleArchiveNote}
+              />
+            )
+          )}
         </div>
       )}
     </div>

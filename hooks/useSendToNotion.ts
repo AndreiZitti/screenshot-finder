@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useNotionSettings } from './useNotionSettings';
+import { useNotionConnections } from './useNotionConnections';
+import type { NotionConnection } from '@/types/notion';
 
 type SendStatus = 'idle' | 'sending' | 'success' | 'error';
 
@@ -11,14 +12,30 @@ interface SendToNotionOptions {
   description?: string;
   transcription?: string;
   link?: string;
+  connectionId?: string; // Optional: specify which connection to use
 }
 
 export function useSendToNotion() {
-  const { settings } = useNotionSettings();
+  const { connections, getDefault, hasConnections } = useNotionConnections();
   const [status, setStatus] = useState<SendStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
   const send = useCallback(async (options: SendToNotionOptions) => {
+    // Find the connection to use
+    let connection: NotionConnection | null = null;
+    
+    if (options.connectionId) {
+      connection = connections.find(c => c.id === options.connectionId) || null;
+    } else {
+      connection = getDefault();
+    }
+
+    if (!connection) {
+      setStatus('error');
+      setError('No Notion connection configured');
+      return { success: false, error: 'No Notion connection configured' };
+    }
+
     setStatus('sending');
     setError(null);
 
@@ -28,7 +45,10 @@ export function useSendToNotion() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...options,
-          credentials: settings,
+          credentials: {
+            apiKey: connection.api_key,
+            pageId: connection.page_id,
+          },
         }),
       });
 
@@ -50,7 +70,7 @@ export function useSendToNotion() {
       setError(message);
       return { success: false, error: message };
     }
-  }, [settings]);
+  }, [connections, getDefault]);
 
   const reset = useCallback(() => {
     setStatus('idle');
@@ -62,6 +82,8 @@ export function useSendToNotion() {
     status,
     error,
     reset,
-    isConfigured: !!settings,
+    isConfigured: hasConnections,
+    connections, // Expose connections for UI to show picker
+    defaultConnection: getDefault(),
   };
 }

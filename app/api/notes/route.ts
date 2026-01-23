@@ -38,7 +38,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ notes: data || [] });
+    return NextResponse.json(
+      { notes: data || [] },
+      {
+        headers: {
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+        },
+      }
+    );
   } catch (error) {
     console.error('Fetch error:', error);
     return NextResponse.json(

@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 const cookieOptions = {
   path: '/',
   sameSite: 'lax' as const,
-  secure: true
+  secure: process.env.NODE_ENV === 'production'
 };
 
 export async function createClient() {

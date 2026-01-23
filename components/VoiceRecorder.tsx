@@ -41,7 +41,11 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
     setIsTranscribing(true);
     try {
       const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
+      // Determine file extension from MIME type
+      const ext = audioBlob.type.includes('mp4') ? 'mp4' 
+        : audioBlob.type.includes('wav') ? 'wav' 
+        : 'webm';
+      formData.append('audio', audioBlob, `recording.${ext}`);
 
       const response = await fetch('/api/transcribe', {
         method: 'POST',

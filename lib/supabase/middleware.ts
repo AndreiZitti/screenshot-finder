@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const cookieOptions = {
   path: '/',
   sameSite: 'lax' as const,
-  secure: true
+  secure: process.env.NODE_ENV === 'production'
 };
 
 export async function updateSession(request: NextRequest) {

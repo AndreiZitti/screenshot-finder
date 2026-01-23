@@ -40,10 +40,16 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
         console.log(`Track ${i}:`, track.label, track.enabled, track.muted, track.readyState);
       });
 
-      // Use webm/opus which Whisper accepts
+      // Determine best supported MIME type (iOS needs mp4, others prefer webm)
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
-        : 'audio/webm';
+        : MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : MediaRecorder.isTypeSupported('audio/mp4')
+        ? 'audio/mp4'
+        : 'audio/wav';
+      
+      console.log('Using MIME type:', mimeType);
 
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;

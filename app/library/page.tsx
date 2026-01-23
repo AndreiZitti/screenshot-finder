@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Discovery, DiscoveryType, DISCOVERY_TYPES, DISCOVERY_TYPE_LABELS } from '@/types/discovery';
 import { Note } from '@/types/note';
 import DiscoveryCard from '@/components/DiscoveryCard';
 import NoteCard from '@/components/NoteCard';
+import { useStashCache } from '@/hooks/useStashCache';
 
 const TYPE_ICONS: Record<DiscoveryType, string> = {
   series: '📺',
@@ -24,31 +25,17 @@ type StashItem =
 function LibraryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [discoveries, setDiscoveries] = useState<Discovery[]>([]);
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    discoveries,
+    notes,
+    isLoading,
+    isOffline,
+    isCached,
+    removeDiscovery,
+    removeNote,
+  } = useStashCache();
 
   const activeFilter = (searchParams.get('type') as FilterType) || 'all';
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [discoveriesRes, notesRes] = await Promise.all([
-          fetch('/api/discoveries'),
-          fetch('/api/notes'),
-        ]);
-        const discoveriesData = await discoveriesRes.json();
-        const notesData = await notesRes.json();
-        setDiscoveries(discoveriesData.discoveries || []);
-        setNotes(notesData.notes || []);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
 
   const setFilter = (type: FilterType) => {
     if (type === 'all') {
@@ -73,29 +60,38 @@ function LibraryContent() {
     : allItems.filter((item) => item.kind === 'discovery' && item.data.type === activeFilter);
 
   const handleDeleteDiscovery = (id: string) => {
-    setDiscoveries((prev) => prev.filter((d) => d.id !== id));
+    removeDiscovery(id);
   };
 
   const handleArchiveDiscovery = (id: string) => {
-    setDiscoveries((prev) => prev.filter((d) => d.id !== id));
+    removeDiscovery(id);
   };
 
   const handleDeleteNote = (id: string) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+    removeNote(id);
   };
 
   const handleArchiveNote = (id: string) => {
-    setNotes((prev) => prev.filter((n) => n.id !== id));
+    removeNote(id);
   };
 
   const totalCount = discoveries.length + notes.length;
 
   return (
     <div className="space-y-6">
+      {isOffline && (
+        <div className="rounded-lg bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">
+          You're offline. Showing cached data.
+        </div>
+      )}
+
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">Stash</h1>
         <p className="mt-2 text-gray-600">
           Your discoveries and notes
+          {isCached && !isOffline && (
+            <span className="ml-2 text-xs text-gray-400">(cached)</span>
+          )}
         </p>
       </div>
 

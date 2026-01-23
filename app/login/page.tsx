@@ -102,7 +102,15 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6">
-          Contact your administrator for account access
+          Need an account? Contact{' '}
+          <a 
+            href="https://zitti.ro" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-gray-900 hover:underline"
+          >
+            zitti
+          </a>
         </p>
       </div>
     </div>

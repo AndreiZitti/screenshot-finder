@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { extractName } from '@/lib/groq';
 import { getDiscoveryInfo } from '@/lib/gemini';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { Discovery, DiscoveryType } from '@/types/discovery';
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const formData = await request.formData();
     const images = formData.getAll('images') as File[];
     const type = (formData.get('type') as DiscoveryType) || 'series';
@@ -15,6 +25,17 @@ export async function POST(request: NextRequest) {
         { error: 'No images provided' },
         { status: 400 }
       );
+    }
+
+    // Limit file sizes (max 10MB per image)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    for (const image of images) {
+      if (image.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: `Image ${image.name} exceeds 10MB limit` },
+          { status: 400 }
+        );
+      }
     }
 
     const results: Discovery[] = [];
@@ -33,10 +54,11 @@ export async function POST(request: NextRequest) {
       // Get detailed info using Gemini with web search
       const info = await getDiscoveryInfo(name, type);
 
-      // Save to Supabase
+      // Save to Supabase with user_id
       const { data, error } = await supabase
         .from('discoveries')
         .insert({
+          user_id: user.id,
           type,
           name,
           description: info.description,

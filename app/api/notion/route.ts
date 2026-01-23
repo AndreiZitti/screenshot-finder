@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { sendToNotion, testNotionConnection, NotionCredentials } from '@/lib/notion';
 
 // Get credentials - user settings take priority, env vars as fallback
@@ -21,6 +22,16 @@ function getCredentials(bodyCredentials?: Partial<NotionCredentials>): NotionCre
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { action, type, name, description, transcription, link, credentials: bodyCredentials } = body;
     

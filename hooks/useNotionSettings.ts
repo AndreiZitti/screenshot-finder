@@ -33,7 +33,10 @@ export function useNotionSettings() {
 
       // Fall back to Supabase
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use getSession() instead of getUser() to avoid triggering token refresh
+      // The middleware handles token refresh; client should use cached session
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       
       if (user) {
         const { data } = await supabase
@@ -68,7 +71,10 @@ export function useNotionSettings() {
 
       // Also save to Supabase for cross-device sync
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      // Use getSession() instead of getUser() to avoid triggering token refresh
+      // The middleware handles token refresh; client should use cached session
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       
       if (user) {
         await supabase
@@ -95,7 +101,10 @@ export function useNotionSettings() {
     setSettings(null);
     
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use getSession() instead of getUser() to avoid triggering token refresh
+    // The middleware handles token refresh; client should use cached session
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
     
     if (user) {
       await supabase

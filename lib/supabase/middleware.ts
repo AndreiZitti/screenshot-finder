@@ -40,13 +40,14 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes - redirect to login if not authenticated
-  const protectedPaths = ["/library"];
-  const isProtectedPath = protectedPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
+  // Public routes that don't require authentication
+  const publicPaths = ["/login"];
+  const isPublicPath = publicPaths.some((path) =>
+    request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith("/api/")
   );
 
-  if (isProtectedPath && !user) {
+  // Redirect to login if not authenticated and not on a public path
+  if (!isPublicPath && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

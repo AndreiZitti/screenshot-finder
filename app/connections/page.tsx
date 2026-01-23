@@ -12,7 +12,6 @@ export default function ConnectionsPage() {
     addConnection,
     updateConnection,
     deleteConnection,
-    setDefault,
   } = useNotionConnections();
 
   const [isAdding, setIsAdding] = useState(false);
@@ -82,7 +81,6 @@ export default function ConnectionsPage() {
                   setEditingId(null);
                 }}
                 onDelete={() => deleteConnection(connection.id)}
-                onSetDefault={() => setDefault(connection.id)}
                 isSaving={isSaving}
               />
             ))}
@@ -117,7 +115,6 @@ function ConnectionCard({
   onCancelEdit,
   onUpdate,
   onDelete,
-  onSetDefault,
   isSaving,
 }: {
   connection: NotionConnection;
@@ -126,13 +123,39 @@ function ConnectionCard({
   onCancelEdit: () => void;
   onUpdate: (data: { name?: string; api_key?: string; page_id?: string }) => Promise<void>;
   onDelete: () => void;
-  onSetDefault: () => void;
   isSaving: boolean;
 }) {
   const [name, setName] = useState(connection.name);
   const [apiKey, setApiKey] = useState(connection.api_key);
   const [pageId, setPageId] = useState(connection.page_id);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [testMessage, setTestMessage] = useState('');
+
+  const handleTest = async () => {
+    setTestStatus('testing');
+    try {
+      const response = await fetch('/api/notion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          action: 'test', 
+          credentials: { apiKey: connection.api_key, pageId: connection.page_id } 
+        }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        setTestStatus('success');
+        setTestMessage(`Connected to "${result.pageName}"`);
+      } else {
+        setTestStatus('error');
+        setTestMessage(result.error || 'Connection failed');
+      }
+    } catch {
+      setTestStatus('error');
+      setTestMessage('Failed to test connection');
+    }
+  };
 
   if (isEditing) {
     return (
@@ -187,45 +210,55 @@ function ConnectionCard({
   }
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-3">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
+    <div className="rounded-lg border border-gray-200 bg-white p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="min-w-0">
             <p className="font-medium text-gray-900 truncate">{connection.name}</p>
-            {connection.is_default && (
-              <span className="shrink-0 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                default
-              </span>
-            )}
+            <p className="text-xs text-gray-500 truncate">
+              {connection.page_name || `${connection.page_id.slice(0, 12)}...`}
+            </p>
           </div>
-          <p className="text-xs text-gray-500 truncate">
-            {connection.page_name || `${connection.page_id.slice(0, 12)}...`}
-          </p>
         </div>
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
-        {!connection.is_default && (
-          <button onClick={onSetDefault} className="rounded p-1.5 text-gray-400 hover:bg-gray-100" title="Set as default">
+        <div className="flex items-center gap-1 shrink-0">
+          <button 
+            onClick={handleTest} 
+            disabled={testStatus === 'testing'}
+            className="rounded p-1.5 text-gray-400 hover:bg-gray-100 disabled:opacity-50" 
+            title="Test connection"
+          >
+            {testStatus === 'testing' ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            )}
+          </button>
+          <button onClick={onEdit} className="rounded p-1.5 text-gray-400 hover:bg-gray-100" title="Edit">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </button>
-        )}
-        <button onClick={onEdit} className="rounded p-1.5 text-gray-400 hover:bg-gray-100" title="Edit">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-        </button>
-        <button
-          onClick={() => confirm(`Delete "${connection.name}"?`) && onDelete()}
-          className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
-          title="Delete"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-        </button>
+          <button
+            onClick={() => confirm(`Delete "${connection.name}"?`) && onDelete()}
+            className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+            title="Delete"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          </button>
+        </div>
       </div>
+      {testStatus !== 'idle' && (
+        <div className={`rounded px-2 py-1 text-xs ${
+          testStatus === 'testing' ? 'bg-gray-100 text-gray-600' :
+          testStatus === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+        }`}>
+          {testStatus === 'testing' ? 'Testing...' : testMessage}
+        </div>
+      )}
     </div>
   );
 }

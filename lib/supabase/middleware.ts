@@ -35,10 +35,17 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired
+  // Refresh session if expired - this also validates the session
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  // If there's an auth error (invalid refresh token, etc.), clear the session
+  if (error) {
+    // Sign out to clear invalid tokens
+    await supabase.auth.signOut();
+  }
 
   // Public routes that don't require authentication
   const publicPaths = ["/login"];
@@ -47,7 +54,7 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Redirect to login if not authenticated and not on a public path
-  if (!isPublicPath && !user) {
+  if (!isPublicPath && (!user || error)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

@@ -41,12 +41,6 @@ export async function updateSession(request: NextRequest) {
     error,
   } = await supabase.auth.getUser();
 
-  // If there's an auth error (invalid refresh token, etc.), clear the session
-  if (error) {
-    // Sign out to clear invalid tokens
-    await supabase.auth.signOut();
-  }
-
   // Public routes that don't require authentication
   const publicPaths = ["/login"];
   const isPublicPath = publicPaths.some((path) =>

@@ -40,8 +40,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # AI Services
-GROQ_API_KEY=your-groq-key          # Image analysis + transcription
-GEMINI_API_KEY=your-gemini-key      # Web search enrichment
+GEMINI_API_KEY=your-gemini-key      # Image analysis + web search + transcription
+GROQ_API_KEY=your-groq-key          # Optional: faster transcription
 
 # Optional: Default Notion (users can add their own)
 NOTION_API_KEY=your-notion-key

@@ -1,6 +1,14 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { DiscoveryType, DiscoveryInfo } from '@/types/discovery';
 
+const TYPE_PROMPTS: Record<DiscoveryType, string> = {
+  series: 'Identify the TV show, movie, or anime title shown',
+  api_library: 'Identify any programming library, API, SDK, or framework mentioned',
+  ai_tip: 'Identify the AI technique, prompt pattern, tool, or workflow shown',
+  gadget: 'Identify the tech product, device, or hardware shown',
+  other: 'Identify the main subject, product, or concept shown',
+};
+
 let genAI: GoogleGenerativeAI | null = null;
 let searchModel: GenerativeModel | null = null;
 
@@ -66,6 +74,54 @@ If you truly cannot find information after searching, use "Unknown" for that fie
   } catch {
     return {
       description: 'Unable to fetch description',
+      link: '',
+      metadata: {},
+    };
+  }
+}
+
+export async function analyzeImage(
+  imageBase64: string,
+  mimeType: string,
+  type: DiscoveryType
+): Promise<{ name: string } & DiscoveryInfo> {
+  const model = getSearchModel();
+
+  const prompt = `You are analyzing a screenshot. ${TYPE_PROMPTS[type]}
+
+First, identify what this is. Then search the web to find detailed information about it.
+
+${TYPE_SEARCH_PROMPTS[type]}
+
+IMPORTANT: You MUST search the web to find accurate, up-to-date information.
+
+Respond with ONLY a JSON object in this exact format, no other text:
+{"name": "exact name identified", "description": "2-3 sentence description", "link": "official or most relevant URL", "metadata": {...}}
+
+If you cannot identify the subject, respond with: {"name": "Unknown", "description": "", "link": "", "metadata": {}}`;
+
+  const result = await model.generateContent([
+    { text: prompt },
+    {
+      inlineData: {
+        mimeType,
+        data: imageBase64,
+      },
+    },
+  ]);
+
+  const text = result.response.text();
+
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return JSON.parse(text);
+  } catch {
+    return {
+      name: 'Unknown',
+      description: 'Unable to analyze image',
       link: '',
       metadata: {},
     };

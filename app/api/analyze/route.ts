@@ -51,11 +51,10 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Save to Supabase with user_id
+      // Save to Supabase
       const { data, error } = await supabase
         .from('discoveries')
         .insert({
-          user_id: user.id,
           type,
           name: info.name,
           description: info.description,

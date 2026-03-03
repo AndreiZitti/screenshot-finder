@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { transcribe } from '@/lib/transcribe';
 import { createClient } from '@/lib/supabase/server';
-import { transcribeAudio } from '@/lib/whisper';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,29 +19,19 @@ export async function POST(request: NextRequest) {
 
     if (!audio) {
       return NextResponse.json(
-        { error: 'No audio file provided' },
+        { error: 'No audio provided' },
         { status: 400 }
       );
     }
 
-    // Limit file size (max 25MB for audio)
-    const MAX_FILE_SIZE = 25 * 1024 * 1024;
-    if (audio.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: 'Audio file exceeds 25MB limit' },
-        { status: 400 }
-      );
-    }
+    const buffer = Buffer.from(await audio.arrayBuffer());
+    const mimeType = audio.type || 'audio/webm';
 
-    console.log('Received audio file:', audio.name, audio.size, 'bytes', audio.type);
+    const text = await transcribe(buffer, mimeType);
 
-    const transcription = await transcribeAudio(audio);
-
-    console.log('Transcription result:', transcription);
-
-    return NextResponse.json({ transcription });
+    return NextResponse.json({ text });
   } catch (error) {
-    console.error('Transcription error:', error);
+    console.error('Transcribe error:', error);
     return NextResponse.json(
       { error: 'Failed to transcribe audio' },
       { status: 500 }

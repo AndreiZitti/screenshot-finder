@@ -34,7 +34,7 @@ export default function NotionSendButton({ type, name, description, transcriptio
 
   const handleClick = () => {
     if (!isConfigured) {
-      alert('No Notion connections configured. Go to Settings to add one.');
+      alert('No Notion connections configured. Go to Connections to add one.');
       return;
     }
     

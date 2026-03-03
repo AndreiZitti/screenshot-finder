@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { extractName } from '@/lib/groq';
-import { getDiscoveryInfo } from '@/lib/gemini';
+import { analyzeImage } from '@/lib/gemini';
 import { createClient } from '@/lib/supabase/server';
 import { Discovery, DiscoveryType } from '@/types/discovery';
 
@@ -43,16 +42,14 @@ export async function POST(request: NextRequest) {
     for (const image of images) {
       const buffer = await image.arrayBuffer();
       const base64 = Buffer.from(buffer).toString('base64');
+      const mimeType = image.type || 'image/jpeg';
 
-      // Extract name from image using Groq
-      const name = await extractName(base64, type);
+      // Combined vision + search call
+      const info = await analyzeImage(base64, mimeType, type);
 
-      if (name === 'Unknown') {
+      if (info.name === 'Unknown') {
         continue;
       }
-
-      // Get detailed info using Gemini with web search
-      const info = await getDiscoveryInfo(name, type);
 
       // Save to Supabase with user_id
       const { data, error } = await supabase
@@ -60,7 +57,7 @@ export async function POST(request: NextRequest) {
         .insert({
           user_id: user.id,
           type,
-          name,
+          name: info.name,
           description: info.description,
           link: info.link,
           metadata: info.metadata,

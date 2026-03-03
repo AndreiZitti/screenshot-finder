@@ -53,6 +53,7 @@ export default function CaptureZone() {
     if (imageFiles.length > 0) {
       setPreviewImages(imageFiles);
       setMode('image-preview');
+      setShowTypePopup(true); // Auto-open popup
       setError(null);
     }
   }, []);
@@ -275,116 +276,96 @@ export default function CaptureZone() {
         </>
       )}
 
-      {/* Image Preview Mode */}
-      {mode === 'image-preview' && (
-        <div className="space-y-4">
-          {/* Image Thumbnails */}
-          <div className="flex flex-wrap gap-3">
-            {previewImages.map((file, index) => (
-              <div key={index} className="relative">
+      {/* Type Selector Popup - shown over everything */}
+      {showTypePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">What are you looking for?</h3>
+            
+            {/* Image Preview in Popup */}
+            <div className="mb-4 flex justify-center gap-2">
+              {previewImages.slice(0, 3).map((file, index) => (
                 <img
+                  key={index}
                   src={URL.createObjectURL(file)}
                   alt={`Preview ${index + 1}`}
-                  className="h-16 w-16 sm:h-24 sm:w-24 rounded-lg object-cover"
+                  className="h-16 w-16 rounded-lg object-cover"
                 />
-                <button
-                  onClick={() => removeImage(index)}
-                  className="absolute -right-2 -top-2 rounded-full bg-gray-900 p-1 text-white hover:bg-gray-700"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Type Selector Button */}
-          <div className="flex flex-col items-center gap-3">
-            <button
-              onClick={() => setShowTypePopup(true)}
-              className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
-            >
-              <span>{TYPE_ICONS[selectedType]}</span>
-              <span>{DISCOVERY_TYPES.find(t => t.value === selectedType)?.label}</span>
-              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {customHint && (
-              <p className="text-xs text-gray-500">Hint: {customHint}</p>
-            )}
-          </div>
-
-          {/* Type Selector Popup */}
-          {showTypePopup && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowTypePopup(false)}>
-              <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" onClick={e => e.stopPropagation()}>
-                <h3 className="mb-4 text-lg font-semibold text-gray-900">What are you looking for?</h3>
-                
-                {/* Type Buttons */}
-                <div className="mb-4 grid grid-cols-2 gap-2">
-                  {DISCOVERY_TYPES.map((type) => (
-                    <button
-                      key={type.value}
-                      onClick={() => {
-                        setSelectedType(type.value);
-                        setShowTypePopup(false);
-                      }}
-                      className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-left text-sm font-medium transition-colors ${
-                        selectedType === type.value
-                          ? 'border-gray-900 bg-gray-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <span className="text-lg">{TYPE_ICONS[type.value]}</span>
-                      <span>{type.label}</span>
-                    </button>
-                  ))}
+              ))}
+              {previewImages.length > 3 && (
+                <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-100 text-sm text-gray-500">
+                  +{previewImages.length - 3}
                 </div>
-
-                {/* Custom Hint Input */}
-                <div className="mb-4">
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Add a hint (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={customHint}
-                    onChange={(e) => setCustomHint(e.target.value)}
-                    placeholder="e.g., 'anime from 2023' or 'React library'"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
-                  />
-                </div>
-
-                {/* Done Button */}
-                <button
-                  onClick={() => setShowTypePopup(false)}
-                  className="w-full rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
-                >
-                  Done
-                </button>
-              </div>
+              )}
             </div>
-          )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-3">
-            <button
-              onClick={cancelImagePreview}
-              disabled={isProcessing}
-              className="rounded-lg px-6 py-3 sm:py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={analyzeImages}
-              disabled={isProcessing}
-              className="rounded-lg bg-gray-900 px-6 py-3 sm:py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-            >
-              {isProcessing ? 'Analyzing...' : 'Analyze'}
-            </button>
+            {/* Type Buttons */}
+            <div className="mb-4 grid grid-cols-2 gap-2">
+              {DISCOVERY_TYPES.map((type) => (
+                <button
+                  key={type.value}
+                  onClick={() => setSelectedType(type.value)}
+                  className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                    selectedType === type.value
+                      ? 'border-gray-900 bg-gray-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="text-lg">{TYPE_ICONS[type.value]}</span>
+                  <span>{type.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Hint Input */}
+            <div className="mb-4">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                Add a hint (optional)
+              </label>
+              <input
+                type="text"
+                value={customHint}
+                onChange={(e) => setCustomHint(e.target.value)}
+                placeholder="e.g., 'anime from 2023' or 'React library'"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowTypePopup(false);
+                  setPreviewImages([]);
+                  setMode('idle');
+                  setCustomHint('');
+                }}
+                className="flex-1 rounded-lg border border-gray-300 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowTypePopup(false);
+                  analyzeImages();
+                }}
+                className="flex-1 rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+              >
+                Analyze
+              </button>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Preview Mode - Loading state after popup closes */}
+      {mode === 'image-preview' && !showTypePopup && isProcessing && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <svg className="h-12 w-12 animate-spin text-gray-400" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p className="mt-4 text-sm text-gray-500">Analyzing your image...</p>
         </div>
       )}
 

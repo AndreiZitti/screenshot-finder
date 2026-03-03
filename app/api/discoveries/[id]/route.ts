@@ -71,6 +71,20 @@ export async function DELETE(
 
     const { id } = await params;
 
+    // First check if the item exists
+    const { data: existing } = await supabase
+      .from('discoveries')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Discovery not found' },
+        { status: 404 }
+      );
+    }
+
     const { error } = await supabase
       .from('discoveries')
       .delete()
@@ -81,6 +95,21 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Failed to delete discovery' },
         { status: 500 }
+      );
+    }
+
+    // Verify deletion
+    const { data: stillExists } = await supabase
+      .from('discoveries')
+      .select('id')
+      .eq('id', id)
+      .single();
+
+    if (stillExists) {
+      console.error('Delete failed - item still exists (likely RLS blocking)');
+      return NextResponse.json(
+        { error: 'Delete blocked - check database permissions' },
+        { status: 403 }
       );
     }
 

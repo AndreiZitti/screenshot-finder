@@ -83,11 +83,16 @@ If you truly cannot find information after searching, use "Unknown" for that fie
 export async function analyzeImage(
   imageBase64: string,
   mimeType: string,
-  type: DiscoveryType
+  type: DiscoveryType,
+  hint?: string
 ): Promise<{ name: string } & DiscoveryInfo> {
   const model = getSearchModel();
 
-  const prompt = `You are analyzing a screenshot. ${TYPE_PROMPTS[type]}
+  const hintSection = hint 
+    ? `\n\nUSER HINT: The user provided this hint about the image: "${hint}". Use this to help identify and search for the subject.`
+    : '';
+
+  const prompt = `You are analyzing a screenshot. ${TYPE_PROMPTS[type]}${hintSection}
 
 First, identify what this is. Then search the web to find detailed information about it.
 

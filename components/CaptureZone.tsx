@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Discovery, DiscoveryType, DISCOVERY_TYPES } from '@/types/discovery';
 import DiscoveryCard from './DiscoveryCard';
 import VoiceRecorder from './VoiceRecorder';
@@ -19,12 +20,17 @@ const TYPE_ICONS: Record<DiscoveryType, string> = {
 type CaptureMode = 'idle' | 'image-preview' | 'transcription-preview';
 
 export default function CaptureZone() {
+  const router = useRouter();
   const [mode, setMode] = useState<CaptureMode>('idle');
   const [selectedType, setSelectedType] = useState<DiscoveryType>('series');
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<Discovery[]>([]);
   const [error, setError] = useState<string | null>(null);
+  
+  // Type selector popup state
+  const [showTypePopup, setShowTypePopup] = useState(false);
+  const [customHint, setCustomHint] = useState('');
 
   // Image preview state
   const [previewImages, setPreviewImages] = useState<File[]>([]);
@@ -71,6 +77,9 @@ export default function CaptureZone() {
       formData.append('images', file);
     });
     formData.append('type', selectedType);
+    if (customHint) {
+      formData.append('hint', customHint);
+    }
 
     try {
       const response = await fetch('/api/analyze', {
@@ -87,6 +96,11 @@ export default function CaptureZone() {
       setResults((prev) => [...data.results, ...prev]);
       setPreviewImages([]);
       setMode('idle');
+      setCustomHint('');
+      // Navigate to library to see results
+      if (data.results.length > 0) {
+        router.push('/library');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -285,24 +299,74 @@ export default function CaptureZone() {
             ))}
           </div>
 
-          {/* Type Selector */}
-          <div className="flex items-center justify-center gap-3">
-            <label htmlFor="type-select" className="text-sm font-medium text-gray-700">
-              Looking for:
-            </label>
-            <select
-              id="type-select"
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as DiscoveryType)}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+          {/* Type Selector Button */}
+          <div className="flex flex-col items-center gap-3">
+            <button
+              onClick={() => setShowTypePopup(true)}
+              className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50"
             >
-              {DISCOVERY_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {TYPE_ICONS[type.value]} {type.label}
-                </option>
-              ))}
-            </select>
+              <span>{TYPE_ICONS[selectedType]}</span>
+              <span>{DISCOVERY_TYPES.find(t => t.value === selectedType)?.label}</span>
+              <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {customHint && (
+              <p className="text-xs text-gray-500">Hint: {customHint}</p>
+            )}
           </div>
+
+          {/* Type Selector Popup */}
+          {showTypePopup && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowTypePopup(false)}>
+              <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+                <h3 className="mb-4 text-lg font-semibold text-gray-900">What are you looking for?</h3>
+                
+                {/* Type Buttons */}
+                <div className="mb-4 grid grid-cols-2 gap-2">
+                  {DISCOVERY_TYPES.map((type) => (
+                    <button
+                      key={type.value}
+                      onClick={() => {
+                        setSelectedType(type.value);
+                        setShowTypePopup(false);
+                      }}
+                      className={`flex items-center gap-2 rounded-lg border-2 px-3 py-2.5 text-left text-sm font-medium transition-colors ${
+                        selectedType === type.value
+                          ? 'border-gray-900 bg-gray-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className="text-lg">{TYPE_ICONS[type.value]}</span>
+                      <span>{type.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Hint Input */}
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Add a hint (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={customHint}
+                    onChange={(e) => setCustomHint(e.target.value)}
+                    placeholder="e.g., 'anime from 2023' or 'React library'"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
+                  />
+                </div>
+
+                {/* Done Button */}
+                <button
+                  onClick={() => setShowTypePopup(false)}
+                  className="w-full rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex justify-center gap-3">

@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const images = formData.getAll('images') as File[];
     const type = (formData.get('type') as DiscoveryType) || 'series';
+    const hint = formData.get('hint') as string | null;
 
     if (images.length === 0) {
       return NextResponse.json(
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
       const mimeType = image.type || 'image/jpeg';
 
       // Combined vision + search call
-      const info = await analyzeImage(base64, mimeType, type);
+      const info = await analyzeImage(base64, mimeType, type, hint || undefined);
 
       if (info.name === 'Unknown') {
         continue;

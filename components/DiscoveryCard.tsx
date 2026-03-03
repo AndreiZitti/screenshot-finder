@@ -40,6 +40,18 @@ const METADATA_LABELS: Record<string, string> = {
   where_to_buy: 'Buy at',
 };
 
+function formatMetadataValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string' || typeof value === 'number') return String(value);
+  if (Array.isArray(value)) return value.map(v => formatMetadataValue(v)).join(', ');
+  if (typeof value === 'object') {
+    return Object.entries(value)
+      .map(([k, v]) => `${k}: ${formatMetadataValue(v)}`)
+      .join(', ');
+  }
+  return String(value);
+}
+
 export default function DiscoveryCard({ discovery, onDelete, onArchive, showArchiveButton = true }: DiscoveryCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
@@ -179,7 +191,7 @@ export default function DiscoveryCard({ discovery, onDelete, onArchive, showArch
                 <span className="font-medium text-gray-500">
                   {METADATA_LABELS[key] || key}:
                 </span>
-                <span className="text-gray-900 break-words">{value}</span>
+                <span className="text-gray-900 break-words">{formatMetadataValue(value)}</span>
               </div>
             ))}
           </div>

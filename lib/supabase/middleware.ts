@@ -38,21 +38,7 @@ export async function updateSession(request: NextRequest) {
   // Refresh session if expired - this also validates the session
   const {
     data: { user },
-    error,
   } = await supabase.auth.getUser();
-
-  // Public routes that don't require authentication
-  const publicPaths = ["/login"];
-  const isPublicPath = publicPaths.some((path) =>
-    request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith("/api/")
-  );
-
-  // Redirect to login if not authenticated and not on a public path
-  if (!isPublicPath && (!user || error)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
 
   // Redirect logged-in users away from login page
   if (request.nextUrl.pathname === "/login" && user) {

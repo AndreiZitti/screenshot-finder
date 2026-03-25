@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeImage } from '@/lib/gemini';
 import { createClient } from '@/lib/supabase/server';
+import { resolveGeminiKey } from '@/lib/env';
 import { Discovery, DiscoveryType } from '@/types/discovery';
 
 export async function POST(request: NextRequest) {
@@ -8,9 +9,27 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
+    // Resolve Gemini API key: user settings > header (guest) > env var
+    let geminiKey: string | null = null;
+
+    if (user) {
+      geminiKey = await resolveGeminiKey(user.id);
+    }
+
+    if (!geminiKey) {
+      const headerKey = request.headers.get('x-gemini-api-key');
+      if (headerKey) {
+        geminiKey = headerKey;
+      }
+    }
+
+    if (!geminiKey) {
+      geminiKey = process.env.GEMINI_API_KEY || null;
+    }
+
+    if (!geminiKey) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Gemini API key required', code: 'NO_API_KEY' },
         { status: 401 }
       );
     }
@@ -45,32 +64,50 @@ export async function POST(request: NextRequest) {
       const base64 = Buffer.from(buffer).toString('base64');
       const mimeType = image.type || 'image/jpeg';
 
-      // Combined vision + search call
-      const info = await analyzeImage(base64, mimeType, type, hint || undefined);
+      // Combined vision + search call with resolved key
+      const info = await analyzeImage(base64, mimeType, type, hint || undefined, geminiKey);
 
       if (info.name === 'Unknown') {
         continue;
       }
 
-      // Save to Supabase
-      const { data, error } = await supabase
-        .from('discoveries')
-        .insert({
-          type,
-          name: info.name,
-          description: info.description,
-          link: info.link,
-          metadata: info.metadata,
-        })
-        .select()
-        .single();
+      // If authenticated, also save to Supabase for sync
+      if (user) {
+        const { data, error } = await supabase
+          .from('discoveries')
+          .insert({
+            type,
+            name: info.name,
+            description: info.description,
+            link: info.link,
+            metadata: info.metadata,
+          })
+          .select()
+          .single();
 
-      if (error) {
-        console.error('Supabase insert error:', error);
-        continue;
+        if (error) {
+          console.error('Supabase insert error:', error);
+        }
+
+        if (data) {
+          results.push(data);
+          continue;
+        }
       }
 
-      results.push(data);
+      // For guests or if Supabase insert failed, return without DB id
+      results.push({
+        id: crypto.randomUUID(),
+        type,
+        name: info.name,
+        description: info.description,
+        link: info.link,
+        metadata: info.metadata,
+        image_url: null,
+        notes: null,
+        created_at: new Date().toISOString(),
+        archived_at: null,
+      });
     }
 
     return NextResponse.json({ results });

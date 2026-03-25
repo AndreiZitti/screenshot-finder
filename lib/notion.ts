@@ -26,24 +26,37 @@ export function extractPageId(pageUrlOrId: string): string {
 
 export interface SendToNotionParams {
   credentials: NotionCredentials;
-  type: 'discovery' | 'note';
+  type: 'discovery' | 'note' | 'link';
   name?: string;
   description?: string;
   transcription?: string;
   link?: string;
+  platform?: string;
+  tags?: string[];
 }
 
 export async function sendToNotion(params: SendToNotionParams): Promise<{ success: boolean; error?: string }> {
-  const { credentials, type, name, description, transcription, link } = params;
-  
+  const { credentials, type, name, description, transcription, link, platform, tags } = params;
+
   const client = createNotionClient(credentials.apiKey);
   const pageId = extractPageId(credentials.pageId);
-  
+
   const timestamp = new Date().toLocaleString();
-  
+
   let text: string;
   if (type === 'note') {
     text = `[${timestamp}] Note: ${transcription}`;
+  } else if (type === 'link') {
+    text = `[${timestamp}] 🔗 ${name || link}`;
+    if (platform) {
+      text += ` [${platform}]`;
+    }
+    if (link) {
+      text += ` - ${link}`;
+    }
+    if (tags && tags.length > 0) {
+      text += ` #${tags.join(' #')}`;
+    }
   } else {
     text = `[${timestamp}] ${name}`;
     if (description) {

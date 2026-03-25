@@ -8,6 +8,9 @@ import TranscriptionPreview from './TranscriptionPreview';
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import PendingCaptures from './PendingCaptures';
 import ImageParticleLoader from './ImageParticleLoader';
+import { createDiscovery } from '@/lib/db/discoveries-dal';
+import { createNote } from '@/lib/db/notes-dal';
+import { createLink } from '@/lib/db/links-dal';
 
 const TYPE_ICONS: Record<DiscoveryType, string> = {
   series: '📺',
@@ -26,7 +29,7 @@ export default function CaptureZone() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<Discovery[]>([]);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Type selector popup state
   const [showTypePopup, setShowTypePopup] = useState(false);
   const [customHint, setCustomHint] = useState('');
@@ -36,6 +39,12 @@ export default function CaptureZone() {
 
   // Transcription state
   const [transcription, setTranscription] = useState<string | null>(null);
+
+  // Link input state
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkLoading, setLinkLoading] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [linkSuccess, setLinkSuccess] = useState(false);
 
   const {
     isOnline,
@@ -93,6 +102,18 @@ export default function CaptureZone() {
         throw new Error(data.error || 'Failed to analyze images');
       }
 
+      // Save results to local DB
+      for (const result of data.results) {
+        await createDiscovery({
+          type: result.type,
+          name: result.name,
+          description: result.description,
+          link: result.link,
+          metadata: result.metadata,
+          image_url: result.image_url,
+          notes: null,
+        });
+      }
       setResults((prev) => [...data.results, ...prev]);
       setPreviewImages([]);
       setMode('idle');
@@ -110,25 +131,15 @@ export default function CaptureZone() {
     setMode('transcription-preview');
   };
 
-  // Save transcription as note
+  // Save transcription as note (local-first)
   const saveAsNote = async () => {
     if (!transcription) return;
 
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transcription }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save note');
-      }
-
+      await createNote({ transcription, notes: null });
       setTranscription(null);
       setMode('idle');
-      // Could show a success toast here
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save note');
     } finally {
@@ -184,6 +195,108 @@ export default function CaptureZone() {
     setPreviewImages((prev) => prev.filter((_, i) => i !== index));
     if (previewImages.length === 1) {
       setMode('idle');
+    }
+  };
+
+  // Link input handlers
+  const normalizeUrl = (input: string): string => {
+    const trimmed = input.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    return `https://${trimmed}`;
+  };
+
+  const isValidUrl = (input: string): boolean => {
+    try {
+      new URL(input);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const submitLink = async (rawUrl?: string) => {
+    const url = normalizeUrl(rawUrl || linkUrl);
+    if (!isValidUrl(url)) {
+      setLinkError('Please enter a valid URL');
+      return;
+    }
+
+    setLinkLoading(true);
+    setLinkError(null);
+    setLinkSuccess(false);
+
+    try {
+      // Fetch OG preview
+      const previewResponse = await fetch('/api/links/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+
+      const previewData = await previewResponse.json();
+      const name = previewData.title || url;
+      const platform = previewData.platform || 'other';
+      const thumbnail = previewData.thumbnail || null;
+
+      // Kick off AI enrichment in parallel (fire-and-forget for speed)
+      const enrichPromise = fetch('/api/links/enrich', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, name, platform }),
+      })
+        .then((res) => res.json())
+        .catch(() => ({ description: null, suggestedTags: [] }));
+
+      // Save link immediately with OG data
+      const savedLink = await createLink({
+        url,
+        name,
+        description: null,
+        platform,
+        thumbnail,
+        tags: [],
+        notes: null,
+      });
+
+      // Show success immediately
+      setLinkUrl('');
+      setLinkSuccess(true);
+
+      // When enrichment comes back, update the saved link
+      enrichPromise.then(async (enrichData: { description: string | null; suggestedTags: string[] }) => {
+        if (enrichData.description || (enrichData.suggestedTags && enrichData.suggestedTags.length > 0)) {
+          const { updateLink } = await import('@/lib/db/links-dal');
+          await updateLink(savedLink.id, {
+            description: enrichData.description || null,
+            tags: enrichData.suggestedTags || [],
+          });
+        }
+      });
+
+      // Auto-hide success message after 2 seconds
+      setTimeout(() => setLinkSuccess(false), 2000);
+    } catch (err) {
+      setLinkError(err instanceof Error ? err.message : 'Failed to save link');
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
+  const handleLinkKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      submitLink();
+    }
+  };
+
+  const handleLinkPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData('text').trim();
+    if (pasted.startsWith('http://') || pasted.startsWith('https://')) {
+      e.preventDefault();
+      setLinkUrl(pasted);
+      submitLink(pasted);
     }
   };
 
@@ -266,6 +379,118 @@ export default function CaptureZone() {
             <div className="h-px flex-1 bg-gray-200" />
           </div>
 
+          {/* Link Input Section */}
+          <div className="rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 p-4 sm:p-6">
+            <div className="space-y-3">
+              {/* Link Input */}
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-200 text-gray-500">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  onKeyDown={handleLinkKeyDown}
+                  onPaste={handleLinkPaste}
+                  placeholder="Paste a link (YouTube, TikTok, etc.)"
+                  disabled={linkLoading}
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500 disabled:opacity-50"
+                />
+                <button
+                  onClick={() => submitLink()}
+                  disabled={!linkUrl.trim() || linkLoading}
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {linkLoading ? (
+                    <svg
+                      className="h-4 w-4 animate-spin"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {/* Link Error */}
+              {linkError && (
+                <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+                  {linkError}
+                </div>
+              )}
+
+              {/* Link Success Toast */}
+              {linkSuccess && (
+                <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700 animate-in fade-in duration-200">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                  Link saved!
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-sm text-gray-500">or</span>
+            <div className="h-px flex-1 bg-gray-200" />
+          </div>
+
           {/* Voice Recorder */}
           <VoiceRecorder onTranscription={handleTranscription} />
         </>
@@ -276,7 +501,7 @@ export default function CaptureZone() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" onClick={e => e.stopPropagation()}>
             <h3 className="mb-4 text-lg font-semibold text-gray-900">What are you looking for?</h3>
-            
+
             {/* Image Preview in Popup */}
             <div className="mb-4 flex justify-center gap-2">
               {previewImages.slice(0, 3).map((file, index) => (

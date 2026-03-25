@@ -12,7 +12,17 @@ const TYPE_PROMPTS: Record<DiscoveryType, string> = {
 let genAI: GoogleGenerativeAI | null = null;
 let searchModel: GenerativeModel | null = null;
 
-function getSearchModel(): GenerativeModel {
+function getSearchModel(apiKey?: string): GenerativeModel {
+  // If a user-provided key is given, always create a fresh instance (no caching)
+  if (apiKey) {
+    const userGenAI = new GoogleGenerativeAI(apiKey);
+    return userGenAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      tools: [{ googleSearch: {} } as never],
+    });
+  }
+
+  // Default: use cached singleton with env var
   if (!searchModel) {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
     searchModel = genAI.getGenerativeModel({
@@ -48,8 +58,8 @@ const TYPE_LABELS: Record<DiscoveryType, string> = {
   other: 'topic',
 };
 
-export async function getDiscoveryInfo(name: string, type: DiscoveryType): Promise<DiscoveryInfo> {
-  const model = getSearchModel();
+export async function getDiscoveryInfo(name: string, type: DiscoveryType, apiKey?: string): Promise<DiscoveryInfo> {
+  const model = getSearchModel(apiKey);
 
   const prompt = `Search the web for "${name}" (${TYPE_LABELS[type]}).
 
@@ -84,11 +94,12 @@ export async function analyzeImage(
   imageBase64: string,
   mimeType: string,
   type: DiscoveryType,
-  hint?: string
+  hint?: string,
+  apiKey?: string
 ): Promise<{ name: string } & DiscoveryInfo> {
-  const model = getSearchModel();
+  const model = getSearchModel(apiKey);
 
-  const hintSection = hint 
+  const hintSection = hint
     ? `\n\nUSER HINT: The user provided this hint about the image: "${hint}". Use this to help identify and search for the subject.`
     : '';
 

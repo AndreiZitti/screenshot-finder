@@ -1,39 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { User, Session, AuthChangeEvent } from "@supabase/supabase-js";
+import { useAuth } from "@/lib/auth/auth-context";
 
 export default function UserMenu() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, isGuest } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const supabase = createClient();
-
-  useEffect(() => {
-    const getUser = async () => {
-      // Use getSession() instead of getUser() to avoid triggering token refresh
-      // The middleware handles token refresh; client should use cached session
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
-    };
-    getUser();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: AuthChangeEvent, session: Session | null) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -57,14 +35,8 @@ export default function UserMenu() {
     router.refresh();
   };
 
-  if (loading) {
-    return (
-      <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse" />
-    );
-  }
-
-  // Not logged in state
-  if (!user) {
+  // Guest mode: show sign in link
+  if (isGuest || !user) {
     return (
       <Link
         href="/login"

@@ -99,6 +99,17 @@ export default function LoginPage() {
               {loading ? "Signing in..." : "Sign in"}
             </button>
           </form>
+
+          {/* Guest mode */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-300 transition-colors"
+            >
+              Continue as Guest
+            </button>
+          </div>
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Note } from '@/types/note';
+import { updateNote } from '@/lib/db/notes-dal';
 import NotionSendButton from './NotionSendButton';
 
 interface NoteCardProps {
@@ -14,6 +15,25 @@ export default function NoteCard({ note, onDelete, onArchive }: NoteCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState(note.notes || '');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [savedNotes, setSavedNotes] = useState(note.notes || '');
+
+  const handleSaveNotes = async () => {
+    setIsSavingNotes(true);
+    try {
+      const value = notesValue.trim() || null;
+      await updateNote(note.id, { notes: value });
+      setSavedNotes(value || '');
+      setIsEditingNotes(false);
+    } catch (error) {
+      console.error('Failed to save notes:', error);
+      alert('Failed to save notes');
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
 
   const handleArchive = async () => {
     setIsArchiving(true);
@@ -107,6 +127,41 @@ export default function NoteCard({ note, onDelete, onArchive }: NoteCardProps) {
           <p className="mt-2 text-xs text-gray-400">
             {formatDate(note.created_at)}
           </p>
+
+          {/* Notes display */}
+          {savedNotes && !isEditingNotes && (
+            <p className="mt-2 text-sm italic text-gray-500 border-l-2 border-gray-200 pl-2">
+              {savedNotes}
+            </p>
+          )}
+
+          {/* Notes editor */}
+          {isEditingNotes && (
+            <div className="mt-2">
+              <textarea
+                value={notesValue}
+                onChange={(e) => setNotesValue(e.target.value)}
+                placeholder="Add a note..."
+                rows={2}
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm text-gray-700 placeholder-gray-400 focus:border-gray-400 focus:outline-none"
+              />
+              <div className="mt-1 flex items-center gap-2">
+                <button
+                  onClick={handleSaveNotes}
+                  disabled={isSavingNotes}
+                  className="rounded bg-gray-800 px-3 py-1 text-xs font-medium text-white hover:bg-gray-700 disabled:opacity-50"
+                >
+                  {isSavingNotes ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={() => setIsEditingNotes(false)}
+                  className="rounded px-3 py-1 text-xs text-gray-500 hover:text-gray-700"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button
@@ -134,6 +189,29 @@ export default function NoteCard({ note, onDelete, onArchive }: NoteCardProps) {
             type="note"
             transcription={note.transcription}
           />
+          <button
+            onClick={() => {
+              setIsEditingNotes(!isEditingNotes);
+              if (!isEditingNotes) setNotesValue(savedNotes);
+            }}
+            className="rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            title="Add/edit notes"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}

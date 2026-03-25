@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useNotionConnections } from '@/hooks/useNotionConnections';
+import { useApiKeys } from '@/hooks/useApiKeys';
+import { useAuth } from '@/lib/auth/auth-context';
 import type { NotionConnection } from '@/types/notion';
 
 export default function ConnectionsPage() {
@@ -42,6 +44,9 @@ export default function ConnectionsPage() {
           </button>
         )}
       </div>
+
+      {/* API Keys Section */}
+      <ApiKeysSection />
 
       {/* Notion Section */}
       <div className="rounded-lg border border-gray-200 bg-white p-5">
@@ -105,6 +110,128 @@ export default function ConnectionsPage() {
       {/* Future connections placeholder */}
       <div className="rounded-lg border border-dashed border-gray-300 p-5 text-center">
         <p className="text-sm text-gray-400">More integrations coming soon...</p>
+      </div>
+    </div>
+  );
+}
+
+function ApiKeysSection() {
+  const { groqApiKey, geminiApiKey, saveGroqApiKey, saveGeminiApiKey, isLoading } = useApiKeys();
+  const { isGuest } = useAuth();
+
+  const [groqKey, setGroqKey] = useState('');
+  const [geminiKey, setGeminiKey] = useState('');
+  const [showGroqKey, setShowGroqKey] = useState(false);
+  const [showGeminiKey, setShowGeminiKey] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Sync local state when loaded keys arrive
+  const [initialized, setInitialized] = useState(false);
+  if (!initialized && !isLoading) {
+    setGroqKey(groqApiKey);
+    setGeminiKey(geminiApiKey);
+    setInitialized(true);
+  }
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      await saveGroqApiKey(groqKey);
+      await saveGeminiApiKey(geminiKey);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (error) {
+      console.error('Failed to save API keys:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-5">
+        <div className="flex items-center justify-center py-4">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-5">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+          </svg>
+        </div>
+        <div>
+          <h2 className="font-semibold text-gray-900">API Keys</h2>
+          <p className="text-sm text-gray-500">Required for AI analysis and transcription</p>
+        </div>
+      </div>
+
+      <div className="space-y-3 border-t border-gray-100 pt-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Groq API Key</label>
+          <div className="relative">
+            <input
+              type={showGroqKey ? 'text' : 'password'}
+              value={groqKey}
+              onChange={(e) => setGroqKey(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 text-sm"
+              placeholder="gsk_..."
+            />
+            <button
+              type="button"
+              onClick={() => setShowGroqKey(!showGroqKey)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs"
+            >
+              {showGroqKey ? 'hide' : 'show'}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Gemini API Key</label>
+          <div className="relative">
+            <input
+              type={showGeminiKey ? 'text' : 'password'}
+              value={geminiKey}
+              onChange={(e) => setGeminiKey(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 text-sm"
+              placeholder="AIza..."
+            />
+            <button
+              type="button"
+              onClick={() => setShowGeminiKey(!showGeminiKey)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs"
+            >
+              {showGeminiKey ? 'hide' : 'show'}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save'}
+          </button>
+          {saved && (
+            <span className="text-sm text-green-600">Saved</span>
+          )}
+        </div>
+
+        <p className="text-xs text-gray-400">
+          {isGuest
+            ? 'Keys stored locally in your browser'
+            : 'Keys stored securely on your account'}
+        </p>
       </div>
     </div>
   );

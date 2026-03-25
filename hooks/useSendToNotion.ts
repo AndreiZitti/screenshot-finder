@@ -7,11 +7,13 @@ import type { NotionConnection } from '@/types/notion';
 type SendStatus = 'idle' | 'sending' | 'success' | 'error';
 
 interface SendToNotionOptions {
-  type: 'discovery' | 'note';
+  type: 'discovery' | 'note' | 'link';
   name?: string;
   description?: string;
   transcription?: string;
   link?: string;
+  platform?: string;
+  tags?: string[];
   connectionId?: string; // Optional: specify which connection to use
 }
 

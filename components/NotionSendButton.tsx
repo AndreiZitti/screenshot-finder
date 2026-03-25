@@ -4,14 +4,16 @@ import { useState, useRef, useEffect } from 'react';
 import { useSendToNotion } from '@/hooks/useSendToNotion';
 
 interface NotionSendButtonProps {
-  type: 'discovery' | 'note';
+  type: 'discovery' | 'note' | 'link';
   name?: string;
   description?: string;
   transcription?: string;
   link?: string;
+  platform?: string;
+  tags?: string[];
 }
 
-export default function NotionSendButton({ type, name, description, transcription, link }: NotionSendButtonProps) {
+export default function NotionSendButton({ type, name, description, transcription, link, platform, tags }: NotionSendButtonProps) {
   const { send, status, connections, isConfigured } = useSendToNotion();
   const [showPicker, setShowPicker] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -29,7 +31,7 @@ export default function NotionSendButton({ type, name, description, transcriptio
 
   const handleSend = async (connectionId?: string) => {
     setShowPicker(false);
-    await send({ type, name, description, transcription, link, connectionId });
+    await send({ type, name, description, transcription, link, platform, tags, connectionId });
   };
 
   const handleClick = () => {

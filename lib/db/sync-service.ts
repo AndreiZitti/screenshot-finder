@@ -1,16 +1,22 @@
 import { createClient } from '@/lib/supabase/client';
 import {
+  getAllDiscoveries,
   getDirtyDiscoveries,
+  deleteDiscovery,
   markClean as markDiscoveryClean,
   upsertFromRemote as upsertDiscoveryFromRemote,
 } from './discoveries-dal';
 import {
+  getAllNotes,
   getDirtyNotes,
+  deleteNote,
   markClean as markNoteClean,
   upsertFromRemote as upsertNoteFromRemote,
 } from './notes-dal';
 import {
+  getAllLinks,
   getDirtyLinks,
+  deleteLink,
   markClean as markLinkClean,
   upsertFromRemote as upsertLinkFromRemote,
 } from './links-dal';
@@ -94,6 +100,13 @@ export async function pullFromSupabase(): Promise<void> {
     for (const d of discoveries as Discovery[]) {
       await upsertDiscoveryFromRemote(d);
     }
+    // Remove local records deleted server-side (keep dirty/unsynced ones)
+    const remoteDiscoveryIds = new Set((discoveries as Discovery[]).map(d => d.id));
+    for (const local of await getAllDiscoveries()) {
+      if (!remoteDiscoveryIds.has(local.id) && !local._dirty) {
+        await deleteDiscovery(local.id);
+      }
+    }
   }
 
   // Pull notes
@@ -106,6 +119,12 @@ export async function pullFromSupabase(): Promise<void> {
     for (const n of notes as Note[]) {
       await upsertNoteFromRemote(n);
     }
+    const remoteNoteIds = new Set((notes as Note[]).map(n => n.id));
+    for (const local of await getAllNotes()) {
+      if (!remoteNoteIds.has(local.id) && !local._dirty) {
+        await deleteNote(local.id);
+      }
+    }
   }
 
   // Pull links
@@ -117,6 +136,12 @@ export async function pullFromSupabase(): Promise<void> {
   } else if (links) {
     for (const l of links as Link[]) {
       await upsertLinkFromRemote(l);
+    }
+    const remoteLinkIds = new Set((links as Link[]).map(l => l.id));
+    for (const local of await getAllLinks()) {
+      if (!remoteLinkIds.has(local.id) && !local._dirty) {
+        await deleteLink(local.id);
+      }
     }
   }
 }

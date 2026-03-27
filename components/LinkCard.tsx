@@ -84,7 +84,7 @@ export default function LinkCard({ link, onArchive, onDelete }: LinkCardProps) {
         method: 'DELETE',
       });
 
-      if (response.ok) {
+      if (response.ok || response.status === 404) {
         onDelete?.(link.id);
       } else {
         alert('Failed to delete');

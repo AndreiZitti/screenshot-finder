@@ -11,6 +11,7 @@ import ImageParticleLoader from './ImageParticleLoader';
 import { createDiscovery } from '@/lib/db/discoveries-dal';
 import { createNote } from '@/lib/db/notes-dal';
 import { createLink } from '@/lib/db/links-dal';
+import { autoSync } from '@/lib/db/sync-service';
 
 const TYPE_ICONS: Record<DiscoveryType, string> = {
   series: '📺',
@@ -118,6 +119,7 @@ export default function CaptureZone() {
       setPreviewImages([]);
       setMode('idle');
       setCustomHint('');
+      autoSync();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -140,6 +142,7 @@ export default function CaptureZone() {
       await createNote({ transcription, notes: null });
       setTranscription(null);
       setMode('idle');
+      autoSync();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save note');
     } finally {
@@ -263,6 +266,7 @@ export default function CaptureZone() {
       // Show success immediately
       setLinkUrl('');
       setLinkSuccess(true);
+      autoSync();
 
       // When enrichment comes back, update the saved link
       enrichPromise.then(async (enrichData: { description: string | null; suggestedTags: string[] }) => {
@@ -272,6 +276,7 @@ export default function CaptureZone() {
             description: enrichData.description || null,
             tags: enrichData.suggestedTags || [],
           });
+          autoSync();
         }
       });
 

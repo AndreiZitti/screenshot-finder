@@ -68,7 +68,7 @@ export default function NoteCard({ note, onDelete, onArchive }: NoteCardProps) {
         method: 'DELETE',
       });
 
-      if (response.ok) {
+      if (response.ok || response.status === 404) {
         onDelete?.(note.id);
       } else {
         alert('Failed to delete');

@@ -109,7 +109,8 @@ export default function DiscoveryCard({ discovery, onDelete, onArchive, showArch
         method: 'DELETE',
       });
 
-      if (response.ok) {
+      if (response.ok || response.status === 404) {
+        // 404 means already deleted server-side — still remove from local cache
         onDelete?.(discovery.id);
       } else {
         alert('Failed to delete');

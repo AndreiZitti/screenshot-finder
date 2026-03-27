@@ -25,8 +25,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check initial session
     supabase.auth.getUser().then(({ data: { user }, error }) => {
       if (error) {
-        // Stale/invalid refresh token — sign out to clear cookies
-        supabase.auth.signOut();
+        // Stale/invalid refresh token — clear local session only (no API call)
+        // scope: 'local' prevents calling the Supabase API which would fail with a stale token
+        supabase.auth.signOut({ scope: 'local' });
         setState({ user: null, isGuest: true, isLoading: false });
         return;
       }

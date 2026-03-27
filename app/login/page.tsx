@@ -1,18 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, clearSupabaseCookies } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [ready, setReady] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+
+  // Clear any stale auth state before allowing login
+  useEffect(() => {
+    async function clearStaleSession() {
+      // 1. Nuke cookies directly — stops any in-progress refresh loops
+      clearSupabaseCookies();
+      // 2. Tell Supabase client to clear its in-memory session (no API call)
+      const client = createClient();
+      await client.auth.signOut({ scope: 'local' });
+      // 3. Reset the singleton so handleLogin creates a fresh client
+      if (typeof window !== 'undefined') {
+        window.__supabaseClient = undefined;
+      }
+      setReady(true);
+    }
+    clearStaleSession();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
+    const supabase = createClient();
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -93,7 +111,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !ready}
               className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
             >
               {loading ? "Signing in..." : "Sign in"}

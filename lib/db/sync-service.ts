@@ -40,11 +40,13 @@ function stripSyncFields<T extends { _dirty: boolean; _synced_at: string | null 
  */
 export async function pushToSupabase(): Promise<void> {
   const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return; // Can't push without authentication
 
   // Push dirty discoveries
   const dirtyDiscoveries = await getDirtyDiscoveries();
   for (const discovery of dirtyDiscoveries) {
-    const clean = stripSyncFields(discovery);
+    const clean = { ...stripSyncFields(discovery), user_id: user.id };
     const { error } = await supabase
       .from('discoveries')
       .upsert(clean, { onConflict: 'id' });
@@ -58,7 +60,7 @@ export async function pushToSupabase(): Promise<void> {
   // Push dirty notes
   const dirtyNotes = await getDirtyNotes();
   for (const note of dirtyNotes) {
-    const clean = stripSyncFields(note);
+    const clean = { ...stripSyncFields(note), user_id: user.id };
     const { error } = await supabase
       .from('notes')
       .upsert(clean, { onConflict: 'id' });
@@ -72,7 +74,7 @@ export async function pushToSupabase(): Promise<void> {
   // Push dirty links
   const dirtyLinks = await getDirtyLinks();
   for (const link of dirtyLinks) {
-    const clean = stripSyncFields(link);
+    const clean = { ...stripSyncFields(link), user_id: user.id };
     const { error } = await supabase
       .from('links')
       .upsert(clean, { onConflict: 'id' });

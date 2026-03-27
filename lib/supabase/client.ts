@@ -1,47 +1,83 @@
 import { createBrowserClient } from "@supabase/ssr";
-import type { SupabaseClient } from "@supabase/supabase-js";
-
-// Extend window to store singleton client
-declare global {
-  interface Window {
-    __supabaseClient: SupabaseClient | undefined;
-  }
-}
+import { parse, serialize } from "cookie";
 
 /**
- * Clear all Supabase auth cookies directly from the browser.
- * Used as a fallback when signOut({ scope: 'local' }) may not
- * fully clear cookies (e.g. during stale refresh token recovery).
+ * Cookie adapter with circuit breaker to prevent infinite refresh token loops.
+ *
+ * When the Supabase client has a stale refresh token, it enters a loop:
+ * _callRefreshToken → 400 → _removeSession → _notifyAllSubscribers →
+ * _handleTokenChanged → getSession → _callRefreshToken → 400 → repeat.
+ *
+ * The circuit breaker detects rapid repeated reads (>5 in 2 seconds) and
+ * returns empty cookies, breaking the loop. It also clears the stale cookies.
  */
-export function clearSupabaseCookies() {
-  if (typeof document === 'undefined') return;
-  document.cookie.split(';').forEach(cookie => {
-    const name = cookie.split('=')[0].trim();
-    if (name.includes('auth-token')) {
-      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-    }
-  });
-}
+function createCookieAdapter() {
+  let readCount = 0;
+  let firstReadTime = 0;
+  let circuitBroken = false;
 
-export function createClient() {
-  // Return singleton instance to prevent multiple clients with inconsistent token state
-  if (typeof window !== 'undefined') {
-    if (!window.__supabaseClient) {
-      // On the login page, clear stale auth cookies BEFORE creating the client.
-      // This prevents the infinite refresh loop that occurs when the Supabase client
-      // auto-restores a session with a stale refresh token.
-      // The middleware redirects here when it detects stale cookies server-side,
-      // and this ensures the client-side is also clean.
-      if (window.location.pathname === '/login') {
-        clearSupabaseCookies();
+  return {
+    getAll() {
+      if (circuitBroken) return [];
+
+      const now = Date.now();
+      if (now - firstReadTime > 2000) {
+        readCount = 0;
+        firstReadTime = now;
+      }
+      readCount++;
+
+      if (readCount > 5) {
+        // Infinite loop detected — clear stale cookies and break the circuit
+        circuitBroken = true;
+        document.cookie.split(';').forEach(c => {
+          const name = c.split('=')[0].trim();
+          if (name.includes('auth-token')) {
+            document.cookie = serialize(name, '', { path: '/', maxAge: 0 });
+          }
+        });
+        return [];
       }
 
-      window.__supabaseClient = createBrowserClient(
+      const parsed = parse(document.cookie);
+      return Object.keys(parsed).map(name => ({ name, value: parsed[name] ?? '' }));
+    },
+    setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+      cookiesToSet.forEach(({ name, value, options }) => {
+        document.cookie = serialize(name, value, options as Parameters<typeof serialize>[2]);
+      });
+      // A successful setAll (e.g. after login) means the circuit should reset
+      if (circuitBroken && cookiesToSet.some(c => c.name.includes('auth-token') && c.value)) {
+        circuitBroken = false;
+        readCount = 0;
+      }
+    },
+    /** Reset the circuit breaker (e.g. after fresh login) */
+    reset() {
+      circuitBroken = false;
+      readCount = 0;
+      firstReadTime = 0;
+    },
+  };
+}
+
+let cookieAdapter: ReturnType<typeof createCookieAdapter> | null = null;
+let browserClient: ReturnType<typeof createBrowserClient> | null = null;
+
+export function createClient() {
+  if (typeof window !== 'undefined') {
+    if (!browserClient) {
+      cookieAdapter = createCookieAdapter();
+      browserClient = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: cookieAdapter,
+          isSingleton: false, // we manage the singleton ourselves
+        }
       );
     }
-    return window.__supabaseClient;
+    return browserClient;
   }
 
   // Fallback for SSR (shouldn't be called, but just in case)
@@ -49,4 +85,10 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+}
+
+/** Reset the client after signOut to allow fresh login */
+export function resetClient() {
+  cookieAdapter?.reset();
+  browserClient = null;
 }

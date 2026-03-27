@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
 
     // Check initial session
-    supabase.auth.getUser().then(({ data: { user }, error }) => {
+    supabase.auth.getUser().then(({ data: { user }, error }: { data: { user: User | null }; error: Error | null }) => {
       if (error) {
         // Stale/invalid refresh token — clear local session only (no API call)
         // scope: 'local' prevents calling the Supabase API which would fail with a stale token
@@ -41,7 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setState({ user: session.user, isGuest: false, isLoading: false });
 

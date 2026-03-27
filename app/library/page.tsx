@@ -8,6 +8,7 @@ import { Link } from '@/types/link';
 import DiscoveryCard from '@/components/DiscoveryCard';
 import NoteCard from '@/components/NoteCard';
 import LinkCard from '@/components/LinkCard';
+import { SkeletonGrid } from '@/components/SkeletonCard';
 import { useStashCache } from '@/hooks/useStashCache';
 
 const TYPE_ICONS: Record<DiscoveryType, string> = {
@@ -232,9 +233,7 @@ function LibraryContent() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
-        </div>
+        <SkeletonGrid count={6} />
       ) : filteredItems.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
           {searchQuery.trim() ? (
@@ -246,10 +245,16 @@ function LibraryContent() {
             </>
           ) : (
             <>
-              <p className="text-gray-500">Nothing here yet.</p>
+              <p className="text-lg text-gray-500">Nothing here yet</p>
               <p className="mt-1 text-sm text-gray-400">
-                Capture screenshots or record notes to get started!
+                Capture screenshots, record notes, or save links to get started.
               </p>
+              <a
+                href="/"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+              >
+                Start capturing
+              </a>
             </>
           )}
         </div>

@@ -2,6 +2,7 @@ export type LinkPlatform = 'youtube' | 'tiktok' | 'instagram' | 'reddit' | 'x' |
 
 export interface Link {
   id: string;
+  user_id?: string;
   url: string;
   name: string;
   description: string | null;

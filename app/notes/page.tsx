@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Note } from '@/types/note';
 import NoteCard from '@/components/NoteCard';
+import { SkeletonList } from '@/components/SkeletonCard';
 
 export default function NotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -41,15 +42,19 @@ export default function NotesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
-        </div>
+        <SkeletonList count={4} />
       ) : notes.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-          <p className="text-gray-500">No notes yet.</p>
+          <p className="text-lg text-gray-500">No voice notes yet</p>
           <p className="mt-1 text-sm text-gray-400">
-            Record a voice note to get started!
+            Record a voice note to get started.
           </p>
+          <a
+            href="/"
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+          >
+            Record a note
+          </a>
         </div>
       ) : (
         <div className="space-y-3">

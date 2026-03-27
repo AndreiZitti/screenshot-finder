@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSendToNotion } from '@/hooks/useSendToNotion';
+import { useToast } from '@/contexts/ToastContext';
 
 interface NotionSendButtonProps {
   type: 'discovery' | 'note' | 'link';
@@ -15,6 +16,7 @@ interface NotionSendButtonProps {
 
 export default function NotionSendButton({ type, name, description, transcription, link, platform, tags }: NotionSendButtonProps) {
   const { send, status, connections, isConfigured } = useSendToNotion();
+  const { showToast } = useToast();
   const [showPicker, setShowPicker] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +38,7 @@ export default function NotionSendButton({ type, name, description, transcriptio
 
   const handleClick = () => {
     if (!isConfigured) {
-      alert('No Notion connections configured. Go to Connections to add one.');
+      showToast('No Notion connections configured. Go to Settings to add one.', 'info');
       return;
     }
     

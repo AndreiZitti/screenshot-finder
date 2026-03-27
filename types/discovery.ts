@@ -2,6 +2,7 @@ export type DiscoveryType = 'series' | 'api_library' | 'ai_tip' | 'gadget' | 'ot
 
 export interface Discovery {
   id: string;
+  user_id?: string;
   type: DiscoveryType;
   name: string;
   description: string | null;

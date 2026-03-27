@@ -5,6 +5,7 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      db: { schema: 'stash' },
       cookieOptions: {
         // The auth cookie is set with domain .zitti.ro (shared across subdomains).
         // Without specifying the domain here, cookie deletion targets only the

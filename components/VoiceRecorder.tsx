@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
+import { useToast } from '@/contexts/ToastContext';
 
 interface VoiceRecorderProps {
   onTranscription: (transcription: string) => void;
@@ -10,6 +11,7 @@ interface VoiceRecorderProps {
 
 export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecorderProps) {
   const { state, audioBlob, duration, error, startRecording, stopRecording, reset } = useVoiceRecorder();
+  const { showToast } = useToast();
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -60,7 +62,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
       onTranscription(data.transcription);
     } catch (err) {
       console.error('Transcription error:', err);
-      alert('Failed to transcribe recording');
+      showToast('Failed to transcribe recording');
     } finally {
       setIsTranscribing(false);
       handleReset();

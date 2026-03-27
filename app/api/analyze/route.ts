@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
         const { data, error } = await supabase
           .from('discoveries')
           .insert({
+            user_id: user.id,
             type,
             name: info.name,
             description: info.description,

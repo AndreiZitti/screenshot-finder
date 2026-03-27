@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const cookieOptions = {
   path: '/',
+  domain: '.zitti.ro',
   sameSite: 'lax' as const,
   secure: process.env.NODE_ENV === 'production'
 };

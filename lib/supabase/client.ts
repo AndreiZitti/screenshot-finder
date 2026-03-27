@@ -27,6 +27,15 @@ export function createClient() {
   // Return singleton instance to prevent multiple clients with inconsistent token state
   if (typeof window !== 'undefined') {
     if (!window.__supabaseClient) {
+      // On the login page, clear stale auth cookies BEFORE creating the client.
+      // This prevents the infinite refresh loop that occurs when the Supabase client
+      // auto-restores a session with a stale refresh token.
+      // The middleware redirects here when it detects stale cookies server-side,
+      // and this ensures the client-side is also clean.
+      if (window.location.pathname === '/login') {
+        clearSupabaseCookies();
+      }
+
       window.__supabaseClient = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

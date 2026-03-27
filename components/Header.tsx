@@ -56,6 +56,16 @@ export default function Header() {
               >
                 Archive
               </Link>
+              <Link
+                href="/settings"
+                className={`text-sm font-medium transition-colors ${
+                  pathname === '/settings'
+                    ? 'text-gray-900'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Settings
+              </Link>
             </div>
             <UserMenu />
           </div>

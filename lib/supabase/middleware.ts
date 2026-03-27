@@ -38,7 +38,20 @@ export async function updateSession(request: NextRequest) {
   // Refresh session if expired - this also validates the session
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  // If refresh token is invalid, clear the session cookies
+  if (error) {
+    // Clear auth cookies to prevent refresh_token_not_found loop
+    const response = NextResponse.next({ request });
+    request.cookies.getAll().forEach(cookie => {
+      if (cookie.name.includes('auth-token')) {
+        response.cookies.delete(cookie.name);
+      }
+    });
+    return response;
+  }
 
   // Redirect logged-in users away from login page
   if (request.nextUrl.pathname === "/login" && user) {

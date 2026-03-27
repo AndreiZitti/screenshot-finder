@@ -23,7 +23,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
 
     // Check initial session
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
+      if (error) {
+        // Stale/invalid refresh token — sign out to clear cookies
+        supabase.auth.signOut();
+        setState({ user: null, isGuest: true, isLoading: false });
+        return;
+      }
       if (user) {
         setState({ user, isGuest: false, isLoading: false });
       } else {

@@ -23,10 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
 
     // Check initial session
-    supabase.auth.getUser().then(({ data: { user }, error }: { data: { user: User | null }; error: Error | null }) => {
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
       if (error) {
         // Stale/invalid refresh token — clear local session only (no API call)
-        // scope: 'local' prevents calling the Supabase API which would fail with a stale token
         supabase.auth.signOut({ scope: 'local' });
         setState({ user: null, isGuest: true, isLoading: false });
         return;
@@ -39,20 +38,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Listen for auth state changes
+    // IMPORTANT: Do NOT call async Supabase methods directly inside this callback.
+    // It runs while an auth lock is held, causing deadlocks (auth-js#762).
+    // Use setTimeout to defer any async work.
     const {
       data: { subscription },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } = supabase.auth.onAuthStateChange(async (event: string, session: any) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setState({ user: session.user, isGuest: false, isLoading: false });
 
-        // Trigger sync after sign-in
-        try {
-          const { fullSync } = await import('@/lib/db/sync-service');
-          fullSync();
-        } catch {
-          // sync-service may not exist yet; ignore
-        }
+        // Defer sync to avoid deadlock — this callback runs inside an auth lock
+        setTimeout(() => {
+          import('@/lib/db/sync-service')
+            .then(({ fullSync }) => fullSync())
+            .catch(() => {});
+        }, 0);
       } else if (event === 'SIGNED_OUT') {
         setState({ user: null, isGuest: true, isLoading: false });
       }

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/api-client';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { supabase, user } = await createClientFromRequest(request);
 
     if (!user) {
       return NextResponse.json(
@@ -19,7 +18,6 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    // Handle updating tags and/or notes
     const updateFields: Record<string, unknown> = {};
     if ('tags' in body) updateFields.tags = body.tags;
     if ('notes' in body) updateFields.notes = body.notes;
@@ -61,8 +59,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { supabase, user } = await createClientFromRequest(request);
 
     if (!user) {
       return NextResponse.json(
@@ -73,7 +70,6 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // First check if the item exists
     const { data: existing } = await supabase
       .from('links')
       .select('id')
@@ -100,7 +96,6 @@ export async function DELETE(
       );
     }
 
-    // Verify deletion
     const { data: stillExists } = await supabase
       .from('links')
       .select('id')

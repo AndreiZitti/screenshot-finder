@@ -9,6 +9,11 @@ const cookieOptions = {
 };
 
 export async function updateSession(request: NextRequest) {
+  // Bearer token requests bypass cookie session logic entirely
+  if (request.nextUrl.pathname.startsWith('/api/') && request.headers.has('authorization')) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });

@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { transcribe } from '@/lib/transcribe';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/api-client';
 import { resolveGroqKey, resolveGeminiKey } from '@/lib/env';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await createClientFromRequest(request);
 
-    // Resolve Groq API key: user settings > header (guest) > env var
     let groqKey: string | null = null;
     let geminiKey: string | null = null;
 
@@ -39,7 +37,6 @@ export async function POST(request: NextRequest) {
       geminiKey = process.env.GEMINI_API_KEY || null;
     }
 
-    // Need at least one key for transcription (Groq preferred, Gemini as fallback)
     if (!groqKey && !geminiKey) {
       return NextResponse.json(
         { error: 'API key required for transcription (Groq or Gemini)', code: 'NO_API_KEY' },

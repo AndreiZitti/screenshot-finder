@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeImage } from '@/lib/gemini';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/api-client';
 import { resolveGeminiKey } from '@/lib/env';
 import { Discovery, DiscoveryType } from '@/types/discovery';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await createClientFromRequest(request);
 
-    // Resolve Gemini API key: user settings > header (guest) > env var
     let geminiKey: string | null = null;
 
     if (user) {
@@ -46,7 +44,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Limit file sizes (max 10MB per image)
     const MAX_FILE_SIZE = 10 * 1024 * 1024;
     for (const image of images) {
       if (image.size > MAX_FILE_SIZE) {
@@ -64,14 +61,12 @@ export async function POST(request: NextRequest) {
       const base64 = Buffer.from(buffer).toString('base64');
       const mimeType = image.type || 'image/jpeg';
 
-      // Combined vision + search call with resolved key
       const info = await analyzeImage(base64, mimeType, type, hint || undefined, geminiKey);
 
       if (info.name === 'Unknown') {
         continue;
       }
 
-      // Return result to client — local DB + autoSync handles persistence
       results.push({
         id: crypto.randomUUID(),
         type,

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/api-client';
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { supabase, user } = await createClientFromRequest(request);
 
     if (!user) {
       return NextResponse.json(
@@ -18,7 +17,6 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // First check if the item exists
     const { data: existing } = await supabase
       .from('discoveries')
       .select('id')
@@ -45,7 +43,6 @@ export async function DELETE(
       );
     }
 
-    // Verify deletion
     const { data: stillExists } = await supabase
       .from('discoveries')
       .select('id')

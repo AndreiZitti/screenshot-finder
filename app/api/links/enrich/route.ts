@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createClient } from '@/lib/supabase/server';
+import { createClientFromRequest } from '@/lib/supabase/api-client';
 import { resolveGeminiKey } from '@/lib/env';
 
 export async function POST(request: NextRequest) {
@@ -15,9 +15,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Resolve Gemini API key: user settings > header (guest) > env var
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { user } = await createClientFromRequest(request);
 
     let geminiKey: string | null = null;
 
@@ -36,7 +34,6 @@ export async function POST(request: NextRequest) {
       geminiKey = process.env.GEMINI_API_KEY || null;
     }
 
-    // Graceful degradation: no key = no enrichment
     if (!geminiKey) {
       return NextResponse.json({ description: null, suggestedTags: [] });
     }

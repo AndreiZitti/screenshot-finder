@@ -13,33 +13,14 @@ export async function POST(request: NextRequest) {
     if (user) {
       groqKey = await resolveGroqKey(user.id);
       geminiKey = await resolveGeminiKey(user.id);
-    }
-
-    if (!groqKey) {
-      const headerKey = request.headers.get('x-groq-api-key');
-      if (headerKey) {
-        groqKey = headerKey;
-      }
-    }
-
-    if (!geminiKey) {
-      const headerKey = request.headers.get('x-gemini-api-key');
-      if (headerKey) {
-        geminiKey = headerKey;
-      }
-    }
-
-    if (!groqKey) {
-      groqKey = process.env.GROQ_API_KEY || null;
-    }
-
-    if (!geminiKey) {
-      geminiKey = process.env.GEMINI_API_KEY || null;
+    } else {
+      groqKey = request.headers.get('x-groq-api-key');
+      geminiKey = request.headers.get('x-gemini-api-key');
     }
 
     if (!groqKey && !geminiKey) {
       return NextResponse.json(
-        { error: 'API key required for transcription (Groq or Gemini)', code: 'NO_API_KEY' },
+        { error: 'No API key available. Set your Groq or Gemini key in Settings or pass via x-groq-api-key / x-gemini-api-key header.', code: 'NO_API_KEY' },
         { status: 401 }
       );
     }

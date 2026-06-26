@@ -21,17 +21,8 @@ export async function POST(request: NextRequest) {
 
     if (user) {
       geminiKey = await resolveGeminiKey(user.id);
-    }
-
-    if (!geminiKey) {
-      const headerKey = request.headers.get('x-gemini-api-key');
-      if (headerKey) {
-        geminiKey = headerKey;
-      }
-    }
-
-    if (!geminiKey) {
-      geminiKey = process.env.GEMINI_API_KEY || null;
+    } else {
+      geminiKey = request.headers.get('x-gemini-api-key');
     }
 
     if (!geminiKey) {

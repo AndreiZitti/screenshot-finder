@@ -19,28 +19,6 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    // Handle archive/unarchive
-    if ('archived' in body) {
-      const archived_at = body.archived ? new Date().toISOString() : null;
-
-      const { data, error } = await supabase
-        .from('links')
-        .update({ archived_at })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Supabase archive error:', error);
-        return NextResponse.json(
-          { error: 'Failed to update link' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({ link: data });
-    }
-
     // Handle updating tags and/or notes
     const updateFields: Record<string, unknown> = {};
     if ('tags' in body) updateFields.tags = body.tags;

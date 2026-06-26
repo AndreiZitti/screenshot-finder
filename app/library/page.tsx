@@ -3,10 +3,8 @@
 import { Suspense, useState, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Discovery, DiscoveryType, DISCOVERY_TYPES, DISCOVERY_TYPE_LABELS } from '@/types/discovery';
-import { Note } from '@/types/note';
 import { Link } from '@/types/link';
 import DiscoveryCard from '@/components/DiscoveryCard';
-import NoteCard from '@/components/NoteCard';
 import LinkCard from '@/components/LinkCard';
 import { SkeletonGrid } from '@/components/SkeletonCard';
 import { useStashCache } from '@/hooks/useStashCache';
@@ -16,14 +14,14 @@ const TYPE_ICONS: Record<DiscoveryType, string> = {
   api_library: '📦',
   ai_tip: '🤖',
   gadget: '🔌',
+  note: '🎙️',
   other: '📌',
 };
 
-type FilterType = 'all' | 'notes' | 'links' | DiscoveryType;
+type FilterType = 'all' | 'links' | DiscoveryType;
 
 type StashItem =
   | { kind: 'discovery'; data: Discovery }
-  | { kind: 'note'; data: Note }
   | { kind: 'link'; data: Link };
 
 function LibraryContent() {
@@ -31,13 +29,11 @@ function LibraryContent() {
   const searchParams = useSearchParams();
   const {
     discoveries,
-    notes,
     links,
     isLoading,
     isOffline,
     isCached,
     removeDiscovery,
-    removeNote,
     removeLink,
   } = useStashCache();
 
@@ -55,11 +51,10 @@ function LibraryContent() {
   // Combine and sort all items by date
   const allItems: StashItem[] = useMemo(() => [
     ...discoveries.map((d) => ({ kind: 'discovery' as const, data: d })),
-    ...notes.map((n) => ({ kind: 'note' as const, data: n })),
     ...links.map((l) => ({ kind: 'link' as const, data: l })),
   ].sort((a, b) =>
     new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime()
-  ), [discoveries, notes, links]);
+  ), [discoveries, links]);
 
   // Search across all text fields of an item
   const matchesSearch = (item: StashItem, query: string): boolean => {
@@ -67,12 +62,6 @@ function LibraryContent() {
     if (item.kind === 'discovery') {
       const d = item.data;
       return [d.name, d.description, d.notes, d.link]
-        .filter(Boolean)
-        .some((s) => s!.toLowerCase().includes(q));
-    }
-    if (item.kind === 'note') {
-      const n = item.data;
-      return [n.transcription, n.notes]
         .filter(Boolean)
         .some((s) => s!.toLowerCase().includes(q));
     }
@@ -88,8 +77,6 @@ function LibraryContent() {
   const filteredItems = useMemo(() => {
     let items = activeFilter === 'all'
       ? allItems
-      : activeFilter === 'notes'
-      ? allItems.filter((item) => item.kind === 'note')
       : activeFilter === 'links'
       ? allItems.filter((item) => item.kind === 'link')
       : allItems.filter((item) => item.kind === 'discovery' && item.data.type === activeFilter);
@@ -105,27 +92,11 @@ function LibraryContent() {
     removeDiscovery(id);
   };
 
-  const handleArchiveDiscovery = (id: string) => {
-    removeDiscovery(id);
-  };
-
-  const handleDeleteNote = (id: string) => {
-    removeNote(id);
-  };
-
-  const handleArchiveNote = (id: string) => {
-    removeNote(id);
-  };
-
   const handleDeleteLink = (id: string) => {
     removeLink(id);
   };
 
-  const handleArchiveLink = (id: string) => {
-    removeLink(id);
-  };
-
-  const totalCount = discoveries.length + notes.length + links.length;
+  const totalCount = discoveries.length + links.length;
 
   return (
     <div className="space-y-6">
@@ -138,7 +109,7 @@ function LibraryContent() {
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">Stash</h1>
         <p className="mt-2 text-gray-600">
-          Your discoveries and notes
+          Your saved items
           {isCached && !isOffline && (
             <span className="ml-2 text-xs text-gray-400">(cached)</span>
           )}
@@ -199,24 +170,13 @@ function LibraryContent() {
             🔗 Links ({links.length})
           </button>
         )}
-        {notes.length > 0 && (
-          <button
-            onClick={() => setFilter('notes')}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-              activeFilter === 'notes'
-                ? 'bg-gray-900 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            🎙️ Notes ({notes.length})
-          </button>
-        )}
         {DISCOVERY_TYPES
           .map((type) => ({
             ...type,
             count: discoveries.filter((d) => d.type === type.value).length,
           }))
           .sort((a, b) => b.count - a.count)
+          .filter((type) => type.count > 0)
           .map((type) => (
             <button
               key={type.value}
@@ -266,21 +226,12 @@ function LibraryContent() {
                 key={`discovery-${item.data.id}`}
                 discovery={item.data}
                 onDelete={handleDeleteDiscovery}
-                onArchive={handleArchiveDiscovery}
               />
-            ) : item.kind === 'link' ? (
+            ) : (
               <LinkCard
                 key={`link-${item.data.id}`}
                 link={item.data}
                 onDelete={handleDeleteLink}
-                onArchive={handleArchiveLink}
-              />
-            ) : (
-              <NoteCard
-                key={`note-${item.data.id}`}
-                note={item.data}
-                onDelete={handleDeleteNote}
-                onArchive={handleArchiveNote}
               />
             )
           )}

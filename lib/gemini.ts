@@ -6,6 +6,7 @@ const TYPE_PROMPTS: Record<DiscoveryType, string> = {
   api_library: 'Identify any programming library, API, SDK, or framework mentioned',
   ai_tip: 'Identify the AI technique, prompt pattern, tool, or workflow shown',
   gadget: 'Identify the tech product, device, or hardware shown',
+  note: 'Identify the main subject or topic mentioned',
   other: 'Identify the main subject, product, or concept shown',
 };
 
@@ -46,6 +47,9 @@ Return metadata with keys: source, category, related_tools`,
   gadget: `Find: description, price range, key specifications, where to buy.
 Return metadata with keys: price, specs, where_to_buy`,
 
+  note: `Find: description and any relevant context.
+Return metadata with keys: source`,
+
   other: `Find: description and any relevant official link or source.
 Return metadata with keys: source`,
 };
@@ -55,6 +59,7 @@ const TYPE_LABELS: Record<DiscoveryType, string> = {
   api_library: 'programming library, API, or SDK',
   ai_tip: 'AI technique, tool, or workflow',
   gadget: 'tech product or gadget',
+  note: 'voice note',
   other: 'topic',
 };
 

@@ -1,4 +1,4 @@
-export type DiscoveryType = 'series' | 'api_library' | 'ai_tip' | 'gadget' | 'other';
+export type DiscoveryType = 'series' | 'api_library' | 'ai_tip' | 'gadget' | 'note' | 'other';
 
 export interface Discovery {
   id: string;
@@ -25,6 +25,7 @@ export const DISCOVERY_TYPES: { value: DiscoveryType; label: string }[] = [
   { value: 'api_library', label: 'API / Library' },
   { value: 'ai_tip', label: 'AI Tips' },
   { value: 'gadget', label: 'Tech Gadgets' },
+  { value: 'note', label: 'Voice Notes' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -33,5 +34,6 @@ export const DISCOVERY_TYPE_LABELS: Record<DiscoveryType, string> = {
   api_library: 'API',
   ai_tip: 'AI Tip',
   gadget: 'Gadget',
+  note: 'Note',
   other: 'Other',
 };

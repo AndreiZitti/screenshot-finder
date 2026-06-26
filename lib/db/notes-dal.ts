@@ -56,33 +56,6 @@ export async function deleteNote(id: string): Promise<void> {
   await db.delete('notes', id);
 }
 
-export async function archiveNote(id: string): Promise<LocalNote | undefined> {
-  const db = await getDB();
-  const existing = await db.get('notes', id);
-  if (!existing) return undefined;
-
-  const updated: LocalNote = {
-    ...existing,
-    archived_at: new Date().toISOString(),
-    _dirty: true,
-  };
-  await db.put('notes', updated);
-  return updated;
-}
-
-export async function unarchiveNote(id: string): Promise<LocalNote | undefined> {
-  const db = await getDB();
-  const existing = await db.get('notes', id);
-  if (!existing) return undefined;
-
-  const updated: LocalNote = {
-    ...existing,
-    archived_at: null,
-    _dirty: true,
-  };
-  await db.put('notes', updated);
-  return updated;
-}
 
 export async function getDirtyNotes(): Promise<LocalNote[]> {
   const db = await getDB();

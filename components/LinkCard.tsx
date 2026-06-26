@@ -9,7 +9,6 @@ import NotionSendButton from './NotionSendButton';
 
 interface LinkCardProps {
   link: Link;
-  onArchive?: (id: string) => void;
   onDelete?: (id: string) => void;
 }
 
@@ -30,10 +29,9 @@ function extractHostname(url: string): string {
   }
 }
 
-export default function LinkCard({ link, onArchive, onDelete }: LinkCardProps) {
+export default function LinkCard({ link, onDelete }: LinkCardProps) {
   const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(link.notes || '');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
@@ -52,28 +50,6 @@ export default function LinkCard({ link, onArchive, onDelete }: LinkCardProps) {
       showToast('Failed to save notes');
     } finally {
       setIsSavingNotes(false);
-    }
-  };
-
-  const handleArchive = async () => {
-    setIsArchiving(true);
-    try {
-      const response = await fetch(`/api/links/${link.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ archived: !link.archived_at }),
-      });
-
-      if (response.ok) {
-        onArchive?.(link.id);
-      } else {
-        showToast('Failed to archive');
-      }
-    } catch (error) {
-      console.error('Archive error:', error);
-      showToast('Failed to archive');
-    } finally {
-      setIsArchiving(false);
     }
   };
 
@@ -121,27 +97,6 @@ export default function LinkCard({ link, onArchive, onDelete }: LinkCardProps) {
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <button
-                onClick={handleArchive}
-                disabled={isArchiving}
-                className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
-                title={link.archived_at ? 'Restore from archive' : 'Archive'}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                  />
-                </svg>
-              </button>
               <NotionSendButton
                 type="link"
                 name={link.name}

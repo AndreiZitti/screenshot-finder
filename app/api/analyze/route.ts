@@ -71,32 +71,7 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // If authenticated, also save to Supabase for sync
-      if (user) {
-        const { data, error } = await supabase
-          .from('discoveries')
-          .insert({
-            user_id: user.id,
-            type,
-            name: info.name,
-            description: info.description,
-            link: info.link,
-            metadata: info.metadata,
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Supabase insert error:', error);
-        }
-
-        if (data) {
-          results.push(data);
-          continue;
-        }
-      }
-
-      // For guests or if Supabase insert failed, return without DB id
+      // Return result to client — local DB + autoSync handles persistence
       results.push({
         id: crypto.randomUUID(),
         type,

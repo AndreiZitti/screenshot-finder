@@ -56,33 +56,6 @@ export async function deleteDiscovery(id: string): Promise<void> {
   await db.delete('discoveries', id);
 }
 
-export async function archiveDiscovery(id: string): Promise<LocalDiscovery | undefined> {
-  const db = await getDB();
-  const existing = await db.get('discoveries', id);
-  if (!existing) return undefined;
-
-  const updated: LocalDiscovery = {
-    ...existing,
-    archived_at: new Date().toISOString(),
-    _dirty: true,
-  };
-  await db.put('discoveries', updated);
-  return updated;
-}
-
-export async function unarchiveDiscovery(id: string): Promise<LocalDiscovery | undefined> {
-  const db = await getDB();
-  const existing = await db.get('discoveries', id);
-  if (!existing) return undefined;
-
-  const updated: LocalDiscovery = {
-    ...existing,
-    archived_at: null,
-    _dirty: true,
-  };
-  await db.put('discoveries', updated);
-  return updated;
-}
 
 export async function getDirtyDiscoveries(): Promise<LocalDiscovery[]> {
   const db = await getDB();

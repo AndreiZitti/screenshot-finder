@@ -56,33 +56,6 @@ export async function deleteLink(id: string): Promise<void> {
   await db.delete('links', id);
 }
 
-export async function archiveLink(id: string): Promise<LocalLink | undefined> {
-  const db = await getDB();
-  const existing = await db.get('links', id);
-  if (!existing) return undefined;
-
-  const updated: LocalLink = {
-    ...existing,
-    archived_at: new Date().toISOString(),
-    _dirty: true,
-  };
-  await db.put('links', updated);
-  return updated;
-}
-
-export async function unarchiveLink(id: string): Promise<LocalLink | undefined> {
-  const db = await getDB();
-  const existing = await db.get('links', id);
-  if (!existing) return undefined;
-
-  const updated: LocalLink = {
-    ...existing,
-    archived_at: null,
-    _dirty: true,
-  };
-  await db.put('links', updated);
-  return updated;
-}
 
 export async function getDirtyLinks(): Promise<LocalLink[]> {
   const db = await getDB();

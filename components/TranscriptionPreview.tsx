@@ -8,6 +8,7 @@ const TYPE_ICONS: Record<DiscoveryType, string> = {
   api_library: '📦',
   ai_tip: '🤖',
   gadget: '🔌',
+  note: '🎙️',
   other: '📌',
 };
 

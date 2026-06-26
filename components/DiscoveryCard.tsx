@@ -10,8 +10,6 @@ import NotionSendButton from './NotionSendButton';
 interface DiscoveryCardProps {
   discovery: Discovery;
   onDelete?: (id: string) => void;
-  onArchive?: (id: string) => void;
-  showArchiveButton?: boolean;
 }
 
 const TYPE_COLORS: Record<DiscoveryType, string> = {
@@ -19,6 +17,7 @@ const TYPE_COLORS: Record<DiscoveryType, string> = {
   api_library: 'bg-blue-100 text-blue-700',
   ai_tip: 'bg-green-100 text-green-700',
   gadget: 'bg-orange-100 text-orange-700',
+  note: 'bg-teal-100 text-teal-700',
   other: 'bg-gray-100 text-gray-700',
 };
 
@@ -55,10 +54,9 @@ function formatMetadataValue(value: unknown): string {
   return String(value);
 }
 
-export default function DiscoveryCard({ discovery, onDelete, onArchive, showArchiveButton = true }: DiscoveryCardProps) {
+export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProps) {
   const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState(discovery.notes || '');
   const [isSavingNotes, setIsSavingNotes] = useState(false);
@@ -77,28 +75,6 @@ export default function DiscoveryCard({ discovery, onDelete, onArchive, showArch
       showToast('Failed to save notes');
     } finally {
       setIsSavingNotes(false);
-    }
-  };
-
-  const handleArchive = async () => {
-    setIsArchiving(true);
-    try {
-      const response = await fetch(`/api/discoveries/${discovery.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ archived: !discovery.archived_at }),
-      });
-
-      if (response.ok) {
-        onArchive?.(discovery.id);
-      } else {
-        showToast('Failed to archive');
-      }
-    } catch (error) {
-      console.error('Archive error:', error);
-      showToast('Failed to archive');
-    } finally {
-      setIsArchiving(false);
     }
   };
 
@@ -140,29 +116,6 @@ export default function DiscoveryCard({ discovery, onDelete, onArchive, showArch
               </span>
             </div>
             <div className="flex items-center gap-1">
-              {showArchiveButton && (
-                <button
-                  onClick={handleArchive}
-                  disabled={isArchiving}
-                  className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
-                  title={discovery.archived_at ? 'Restore from archive' : 'Archive'}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
-                    />
-                  </svg>
-                </button>
-              )}
               <NotionSendButton
                 type="discovery"
                 name={discovery.name}
@@ -216,16 +169,22 @@ export default function DiscoveryCard({ discovery, onDelete, onArchive, showArch
             </div>
           </div>
 
-          {/* Name */}
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">
-            {discovery.name}
-          </h3>
-
-          {/* Description */}
-          {discovery.description && (
-            <p className="mb-3 text-sm text-gray-600 line-clamp-3">
-              {discovery.description}
+          {/* Name & Description */}
+          {discovery.type === 'note' ? (
+            <p className="mb-3 text-gray-900">
+              {discovery.description || discovery.name}
             </p>
+          ) : (
+            <>
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">
+                {discovery.name}
+              </h3>
+              {discovery.description && (
+                <p className="mb-3 text-sm text-gray-600 line-clamp-3">
+                  {discovery.description}
+                </p>
+              )}
+            </>
           )}
 
           {/* Notes display */}

@@ -9,7 +9,6 @@ import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import PendingCaptures from './PendingCaptures';
 import ImageParticleLoader from './ImageParticleLoader';
 import { createDiscovery } from '@/lib/db/discoveries-dal';
-import { createNote } from '@/lib/db/notes-dal';
 import { createLink } from '@/lib/db/links-dal';
 import { autoSync } from '@/lib/db/sync-service';
 
@@ -18,6 +17,7 @@ const TYPE_ICONS: Record<DiscoveryType, string> = {
   api_library: '📦',
   ai_tip: '🤖',
   gadget: '🔌',
+  note: '🎙️',
   other: '📌',
 };
 
@@ -133,13 +133,24 @@ export default function CaptureZone() {
     setMode('transcription-preview');
   };
 
-  // Save transcription as note (local-first)
+  // Save transcription as a note-type discovery (local-first)
   const saveAsNote = async () => {
     if (!transcription) return;
 
     setIsProcessing(true);
     try {
-      await createNote({ transcription, notes: null });
+      const name = transcription.length > 60
+        ? transcription.slice(0, 57) + '...'
+        : transcription;
+      await createDiscovery({
+        type: 'note',
+        name,
+        description: transcription,
+        link: null,
+        metadata: null,
+        image_url: null,
+        notes: null,
+      });
       setTranscription(null);
       setMode('idle');
       autoSync();

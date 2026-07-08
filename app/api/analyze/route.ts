@@ -23,6 +23,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const contentType = request.headers.get('content-type') || '';
+    if (!contentType.includes('multipart/form-data')) {
+      return NextResponse.json(
+        { error: 'Image upload must use multipart/form-data' },
+        { status: 400 }
+      );
+    }
+
     const formData = await request.formData();
     const images = formData.getAll('images') as File[];
     const type = (formData.get('type') as DiscoveryType) || 'series';

@@ -17,7 +17,7 @@ function isAllowedOrigin(origin: string | null): boolean {
 function setCorsHeaders(response: NextResponse, origin: string) {
   response.headers.set('Access-Control-Allow-Origin', origin);
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-gemini-api-key, x-groq-api-key');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-gemini-api-key');
   response.headers.set('Access-Control-Max-Age', '86400');
 }
 

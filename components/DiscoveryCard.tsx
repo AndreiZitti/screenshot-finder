@@ -226,11 +226,11 @@ export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProp
           {metadataEntries.length > 0 && (
             <div className="space-y-1.5 text-sm">
               {metadataEntries.map(([key, value]) => (
-                <div key={key} className="flex items-start gap-2">
+                <div key={key} className="grid grid-cols-[5rem_minmax(0,1fr)] items-start gap-2">
                   <span className="font-medium text-gray-500">
                     {METADATA_LABELS[key] || key}:
                   </span>
-                  <span className="text-gray-900 break-words">{formatMetadataValue(value)}</span>
+                  <span className="min-w-0 break-words text-gray-900">{formatMetadataValue(value)}</span>
                 </div>
               ))}
             </div>

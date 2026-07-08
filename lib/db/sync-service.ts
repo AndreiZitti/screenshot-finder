@@ -24,15 +24,43 @@ import type { Discovery } from '@/types/discovery';
 import type { Note } from '@/types/note';
 import type { Link } from '@/types/link';
 
+const MAX_RETRY_DELAY_MS = 60_000;
+let syncUntilCleanPromise: Promise<void> | null = null;
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * Strip sync-only fields before sending to Supabase.
  */
 function stripSyncFields<T extends { _dirty: boolean; _synced_at: string | null }>(
   record: T
 ): Omit<T, '_dirty' | '_synced_at'> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { _dirty, _synced_at, ...rest } = record;
+  const { _dirty: dirty, _synced_at: syncedAt, ...rest } = record;
+  void dirty;
+  void syncedAt;
   return rest as Omit<T, '_dirty' | '_synced_at'>;
+}
+
+export async function getDirtySyncCounts(): Promise<{
+  discoveries: number;
+  notes: number;
+  links: number;
+  total: number;
+}> {
+  const [discoveries, notes, links] = await Promise.all([
+    getDirtyDiscoveries(),
+    getDirtyNotes(),
+    getDirtyLinks(),
+  ]);
+
+  return {
+    discoveries: discoveries.length,
+    notes: notes.length,
+    links: links.length,
+    total: discoveries.length + notes.length + links.length,
+  };
 }
 
 /**
@@ -157,6 +185,36 @@ export async function fullSync(): Promise<void> {
 }
 
 /**
+ * Keep retrying local dirty records until the local DB has nothing left to push.
+ * Uses a module-level guard so multiple callers share one drain loop.
+ */
+export async function syncUntilClean(): Promise<void> {
+  if (syncUntilCleanPromise) return syncUntilCleanPromise;
+
+  syncUntilCleanPromise = (async () => {
+    let retryDelay = 1_000;
+
+    while (typeof navigator === 'undefined' || navigator.onLine) {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      await fullSync();
+
+      const dirtyCounts = await getDirtySyncCounts();
+      if (dirtyCounts.total === 0) return;
+
+      await wait(retryDelay);
+      retryDelay = Math.min(retryDelay * 2, MAX_RETRY_DELAY_MS);
+    }
+  })().finally(() => {
+    syncUntilCleanPromise = null;
+  });
+
+  return syncUntilCleanPromise;
+}
+
+/**
  * Auto-sync: check authentication and run fullSync if the user is logged in.
  * Designed to be called on login and network reconnect.
  * Gracefully handles cases where Supabase is not available (guest mode).
@@ -171,7 +229,7 @@ export async function autoSync(): Promise<void> {
       return;
     }
 
-    await fullSync();
+    await syncUntilClean();
   } catch (err) {
     // Supabase client may not be available or network may be down
     console.error('[sync] autoSync failed', err);

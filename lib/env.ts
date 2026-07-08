@@ -11,7 +11,6 @@ const requiredEnvVars = [
 ] as const;
 
 const optionalEnvVars = [
-  'GROQ_API_KEY',
   'GEMINI_API_KEY',
   'NOTION_API_KEY',
   'NOTION_PAGE_ID',
@@ -23,7 +22,6 @@ type OptionalEnvVar = typeof optionalEnvVars[number];
 interface EnvConfig {
   NEXT_PUBLIC_SUPABASE_URL: string;
   NEXT_PUBLIC_SUPABASE_ANON_KEY: string;
-  GROQ_API_KEY?: string;
   GEMINI_API_KEY?: string;
   NOTION_API_KEY?: string;
   NOTION_PAGE_ID?: string;
@@ -47,7 +45,6 @@ function validateEnv(): EnvConfig {
   return {
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL!,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    GROQ_API_KEY: process.env.GROQ_API_KEY,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     NOTION_API_KEY: process.env.NOTION_API_KEY,
     NOTION_PAGE_ID: process.env.NOTION_PAGE_ID,
@@ -62,11 +59,6 @@ export function getEnv(): EnvConfig {
     env = validateEnv();
   }
   return env;
-}
-
-// For use in API routes to get validated env vars
-export function getGroqApiKey(): string | undefined {
-  return getEnv().GROQ_API_KEY;
 }
 
 export function getGeminiApiKey(): string | undefined {
@@ -87,30 +79,6 @@ export function getNotionConfig() {
     apiKey: config.NOTION_API_KEY,
     pageId: config.NOTION_PAGE_ID,
   };
-}
-
-/**
- * Resolve Groq API key: user's key from DB > env var > null
- */
-export async function resolveGroqKey(userId?: string): Promise<string | null> {
-  if (userId) {
-    try {
-      const supabase = await createClient();
-      const { data } = await supabase
-        .from('user_settings')
-        .select('groq_api_key')
-        .eq('user_id', userId)
-        .single();
-
-      if (data?.groq_api_key) {
-        return data.groq_api_key;
-      }
-    } catch {
-      // Fall through to env var
-    }
-  }
-
-  return process.env.GROQ_API_KEY || null;
 }
 
 /**

@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState, useMemo } from 'react';
+import NextLink from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Discovery, DiscoveryType, DISCOVERY_TYPES, DISCOVERY_TYPE_LABELS } from '@/types/discovery';
 import { Link } from '@/types/link';
@@ -102,7 +103,7 @@ function LibraryContent() {
     <div className="space-y-6">
       {isOffline && (
         <div className="rounded-lg bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">
-          You're offline. Showing cached data.
+          You&rsquo;re offline. Showing cached data.
         </div>
       )}
 
@@ -209,12 +210,12 @@ function LibraryContent() {
               <p className="mt-1 text-sm text-gray-400">
                 Capture screenshots, record notes, or save links to get started.
               </p>
-              <a
+              <NextLink
                 href="/"
                 className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
               >
                 Start capturing
-              </a>
+              </NextLink>
             </>
           )}
         </div>

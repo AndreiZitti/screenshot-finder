@@ -351,7 +351,7 @@ export default function CaptureZone() {
     <div className="space-y-6">
       {!isOnline && (
         <div className="rounded-lg bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">
-          You're offline. Captures will sync when connected.
+          You&rsquo;re offline. Captures will sync when connected.
         </div>
       )}
 
@@ -422,7 +422,7 @@ export default function CaptureZone() {
                   onChange={(e) => setLinkUrl(e.target.value)}
                   onKeyDown={handleLinkKeyDown}
                   onPaste={handleLinkPaste}
-                  placeholder="Paste a link (YouTube, TikTok, etc.)"
+                  placeholder="Paste a link"
                   disabled={linkLoading}
                   className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500 disabled:opacity-50"
                 />

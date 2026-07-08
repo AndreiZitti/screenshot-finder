@@ -13,8 +13,7 @@ This file provides context for AI assistants working on this codebase.
 - **Styling:** Tailwind CSS
 - **Database:** Supabase (PostgreSQL + Auth + RLS)
 - **AI Services:**
-  - Groq (Llama 4 Scout for image analysis, Whisper for transcription)
-  - Google Gemini 2.5 Flash (web search with grounding)
+  - Google Gemini 2.5 Flash (image analysis, web search with grounding, transcription)
 - **Integrations:** Notion API
 
 ## Project Structure
@@ -46,7 +45,6 @@ hooks/                  # Custom React hooks
 
 lib/                    # Utilities and services
   notion.ts             # Notion API client wrapper
-  groq.ts               # Groq API client
   gemini.ts             # Gemini API client
   supabase.ts           # Supabase client
   supabase/             # Supabase SSR clients
@@ -126,8 +124,7 @@ npm run build
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GROQ_API_KEY` | Yes | Groq API for image analysis and transcription |
-| `GEMINI_API_KEY` | Yes | Google AI for web search enrichment |
+| `GEMINI_API_KEY` | Yes | Google AI for image analysis, web search enrichment, and transcription |
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anonymous key |
 | `NOTION_API_KEY` | No | Default Notion integration token |

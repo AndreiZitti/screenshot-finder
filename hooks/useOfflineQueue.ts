@@ -8,6 +8,28 @@ import {
   deletePendingCapture,
   updateCaptureStatus,
 } from '@/lib/offlineStorage';
+import { createDiscovery } from '@/lib/db/discoveries-dal';
+import { getDB } from '@/lib/db/local-db';
+import { syncUntilClean } from '@/lib/db/sync-service';
+
+const MAX_RETRY_DELAY_MS = 60_000;
+let queueDrainPromise: Promise<void> | null = null;
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function getLocalGeminiKey(): Promise<string | null> {
+  const db = await getDB();
+  const entry = await db.get('settings', 'gemini_api_key');
+  return typeof entry?.value === 'string' && entry.value ? entry.value : null;
+}
+
+function nameFromTranscription(transcription: string): string {
+  return transcription.length > 60
+    ? `${transcription.slice(0, 57)}...`
+    : transcription;
+}
 
 export function useOfflineQueue() {
   const [isOnline, setIsOnline] = useState(true);
@@ -85,6 +107,8 @@ export function useOfflineQueue() {
     async (capture: PendingCapture): Promise<boolean> => {
       try {
         await updateCaptureStatus(capture.id, 'processing');
+        const geminiKey = await getLocalGeminiKey();
+        const headers = geminiKey ? { 'x-gemini-api-key': geminiKey } : undefined;
 
         if (capture.type === 'image') {
           const formData = new FormData();
@@ -93,10 +117,24 @@ export function useOfflineQueue() {
 
           const response = await fetch('/api/analyze', {
             method: 'POST',
+            headers,
             body: formData,
           });
 
           if (!response.ok) throw new Error('Analysis failed');
+
+          const data = await response.json();
+          for (const result of data.results || []) {
+            await createDiscovery({
+              type: result.type,
+              name: result.name,
+              description: result.description,
+              link: result.link,
+              metadata: result.metadata,
+              image_url: result.image_url,
+              notes: null,
+            });
+          }
         } else {
           // Voice capture - transcribe first
           const formData = new FormData();
@@ -104,6 +142,7 @@ export function useOfflineQueue() {
 
           const transcribeResponse = await fetch('/api/transcribe', {
             method: 'POST',
+            headers,
             body: formData,
           });
 
@@ -111,17 +150,19 @@ export function useOfflineQueue() {
 
           const { transcription } = await transcribeResponse.json();
 
-          // Save as note
-          const noteResponse = await fetch('/api/notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ transcription }),
+          await createDiscovery({
+            type: 'note',
+            name: nameFromTranscription(transcription),
+            description: transcription,
+            link: null,
+            metadata: null,
+            image_url: null,
+            notes: null,
           });
-
-          if (!noteResponse.ok) throw new Error('Failed to save note');
         }
 
         await deletePendingCapture(capture.id);
+        syncUntilClean().catch(() => {});
         return true;
       } catch (error) {
         console.error('Sync failed:', error);
@@ -132,29 +173,58 @@ export function useOfflineQueue() {
     []
   );
 
-  // Sync all pending captures
-  const syncAll = useCallback(async () => {
-    if (!isOnline || isSyncing) return;
+  const syncOnce = useCallback(async (): Promise<number> => {
+    if (!navigator.onLine) return pendingCount;
 
     setIsSyncing(true);
     const captures = await getAllPendingCaptures();
-    const pendingOnly = captures.filter((c) => c.status === 'pending');
+    const retryable = captures.filter((c) =>
+      c.status === 'pending' || c.status === 'failed' || c.status === 'processing'
+    );
 
-    for (const capture of pendingOnly) {
+    for (const capture of retryable) {
       await syncCapture(capture);
     }
 
     await loadPending();
     setIsSyncing(false);
-  }, [isOnline, isSyncing, syncCapture, loadPending]);
+    const remaining = await getAllPendingCaptures();
+    return remaining.length;
+  }, [pendingCount, syncCapture, loadPending]);
+
+  // Sync all pending captures, retrying with backoff until the queue is empty.
+  const syncAll = useCallback(async () => {
+    if (!isOnline) return;
+    if (queueDrainPromise) {
+      await queueDrainPromise;
+      await loadPending();
+      return;
+    }
+
+    syncScheduledRef.current = true;
+    let retryDelay = 1_000;
+
+    queueDrainPromise = (async () => {
+      while (navigator.onLine) {
+        const remaining = await syncOnce();
+        if (remaining === 0) break;
+
+        await wait(retryDelay);
+        retryDelay = Math.min(retryDelay * 2, MAX_RETRY_DELAY_MS);
+      }
+    })().finally(async () => {
+      syncScheduledRef.current = false;
+      queueDrainPromise = null;
+      await loadPending();
+    });
+
+    return queueDrainPromise;
+  }, [isOnline, syncOnce, loadPending]);
 
   // Auto-sync when coming back online
   useEffect(() => {
-    if (isOnline && pendingCount > 0 && !syncScheduledRef.current) {
-      syncScheduledRef.current = true;
-      syncAll().finally(() => {
-        syncScheduledRef.current = false;
-      });
+    if (isOnline && pendingCount > 0) {
+      syncAll();
     }
   }, [isOnline, pendingCount, syncAll]);
 

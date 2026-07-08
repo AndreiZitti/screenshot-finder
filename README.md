@@ -39,9 +39,8 @@ You'll need API keys for the AI services and a Supabase project:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# AI Services
+# AI Service
 GEMINI_API_KEY=your-gemini-key      # Image analysis + web search + transcription
-GROQ_API_KEY=your-groq-key          # Optional: faster transcription
 
 # Optional: Default Notion (users can add their own)
 NOTION_API_KEY=your-notion-key
@@ -59,11 +58,47 @@ npm run dev
 
 Run the migrations in `supabase/migrations/` for the database schema.
 
+## Programmatic API
+
+External tools can query and act on the stash with a Supabase user access token:
+
+```bash
+curl https://your-app.example/api/control/stash \
+  -H "Authorization: Bearer <supabase-access-token>"
+```
+
+Available endpoints:
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET` | `/api/control/stash` | List stash items across discoveries, links, and notes |
+| `DELETE` | `/api/control/stash/:kind/:id` | Delete a stash item |
+| `POST` | `/api/control/stash/:kind/:id/notion` | Send a stash item to Notion |
+
+Query params for `GET /api/control/stash`:
+
+- `kind`: `all`, `discoveries`, `links`, or `notes`
+- `q`: search text
+- `archived`: `active`, `include`, or `only`
+- `limit`: 1-500
+- `offset`: pagination offset
+
+To move an item into Notion and remove it from the stash:
+
+```bash
+curl -X POST https://your-app.example/api/control/stash/links/<id>/notion \
+  -H "Authorization: Bearer <supabase-access-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"move"}'
+```
+
 ## PWA & Offline
 
 z-stash is a Progressive Web App. On mobile, go to your browser menu → "Add to Home Screen" and it acts like a native app.
 
 **Offline processing**: If you capture something while offline, it gets queued locally and syncs automatically when you're back online. Your stash is also cached locally so you can browse it without connection.
+
+While the app is open, queued captures and dirty local stash records keep retrying with backoff until they have been uploaded to Supabase. The external control API reads from Supabase, so newly captured local items become queryable after this sync completes.
 
 ---
 

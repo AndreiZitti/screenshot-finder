@@ -60,7 +60,7 @@ function ApiKeyField({
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-900">{label}</p>
         {isEditing ? (
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
             <input
               type="password"
               value={inputValue}
@@ -69,19 +69,21 @@ function ApiKeyField({
               className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
               autoFocus
             />
-            <button
-              onClick={handleSave}
-              disabled={!inputValue.trim() || isSaving}
-              className="shrink-0 rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => { setIsEditing(false); setInputValue(''); }}
-              className="shrink-0 text-xs text-gray-500 hover:text-gray-700"
-            >
-              Cancel
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSave}
+                disabled={!inputValue.trim() || isSaving}
+                className="shrink-0 rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => { setIsEditing(false); setInputValue(''); }}
+                className="shrink-0 rounded px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         ) : (
           <MaskedKey value={value} />
@@ -163,7 +165,7 @@ function NotionConnectionForm({
 
 export default function SettingsPage() {
   const { user, isGuest } = useAuth();
-  const { groqApiKey, geminiApiKey, saveGroqApiKey, saveGeminiApiKey, isLoading: keysLoading } = useApiKeys();
+  const { geminiApiKey, saveGeminiApiKey, isLoading: keysLoading } = useApiKeys();
   const {
     connections,
     isLoading: notionLoading,
@@ -244,20 +246,18 @@ export default function SettingsPage() {
 
       {/* API Keys */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">API Keys</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">API Key</h2>
         {keysLoading ? (
           <div className="space-y-3">
-            <div className="h-16 animate-pulse rounded-lg border border-gray-200 bg-gray-50" />
             <div className="h-16 animate-pulse rounded-lg border border-gray-200 bg-gray-50" />
           </div>
         ) : (
           <div className="space-y-3">
             <ApiKeyField label="Gemini API Key" value={geminiApiKey} onSave={saveGeminiApiKey} />
-            <ApiKeyField label="Groq API Key" value={groqApiKey} onSave={saveGroqApiKey} />
           </div>
         )}
         <p className="mt-2 text-xs text-gray-400">
-          Keys are used for image analysis and voice transcription. If not set, the app falls back to shared keys.
+          Gemini is used for image analysis, link enrichment, and voice transcription. If not set, the app falls back to the shared key.
         </p>
       </section>
 
@@ -304,7 +304,9 @@ export default function SettingsPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium text-gray-900">{conn.name}</p>
+                      <p className="truncate text-sm font-medium text-gray-900">
+                        {conn.name || 'Untitled Notion page'}
+                      </p>
                       {conn.is_default && (
                         <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
                           DEFAULT

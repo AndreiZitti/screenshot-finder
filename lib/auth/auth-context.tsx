@@ -32,6 +32,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (user) {
         setState({ user, isGuest: false, isLoading: false });
+        setTimeout(() => {
+          import('@/lib/db/sync-service')
+            .then(({ syncUntilClean }) => syncUntilClean())
+            .catch(() => {});
+        }, 0);
       } else {
         setState({ user: null, isGuest: true, isLoading: false });
       }
@@ -50,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Defer sync to avoid deadlock — this callback runs inside an auth lock
         setTimeout(() => {
           import('@/lib/db/sync-service')
-            .then(({ fullSync }) => fullSync())
+            .then(({ syncUntilClean }) => syncUntilClean())
             .catch(() => {});
         }, 0);
       } else if (event === 'SIGNED_OUT') {
@@ -60,6 +65,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!state.user) return;
+
+    const sync = () => {
+      if (!navigator.onLine) return;
+      import('@/lib/db/sync-service')
+        .then(({ syncUntilClean }) => syncUntilClean())
+        .catch(() => {});
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') sync();
+    };
+
+    sync();
+    window.addEventListener('online', sync);
+    window.addEventListener('focus', sync);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('online', sync);
+      window.removeEventListener('focus', sync);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [state.user]);
 
   return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
 }

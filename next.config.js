@@ -21,7 +21,9 @@ const nextConfig = {
       },
     ],
   },
-  turbopack: {},
+  turbopack: {
+    root: __dirname,
+  },
 };
 
 module.exports = withPWA(nextConfig);

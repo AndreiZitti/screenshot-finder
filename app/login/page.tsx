@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -8,9 +8,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [accessError, setAccessError] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+
+  useEffect(() => {
+    setAccessError(new URLSearchParams(window.location.search).get('error') === 'not_allowed');
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +57,11 @@ export default function LoginPage() {
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                 {error}
+              </div>
+            )}
+            {accessError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                This account is not allowed to access this stash.
               </div>
             )}
 
@@ -100,16 +110,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Guest mode */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={() => router.push('/')}
-              className="w-full py-3 bg-white hover:bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-300 transition-colors"
-            >
-              Continue as Guest
-            </button>
-          </div>
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { analyzeImage } from '@/lib/gemini';
 import { createClientFromRequest } from '@/lib/supabase/api-client';
+import { isAccessControlEnforced } from '@/lib/auth/access-control';
 import { resolveGeminiKey } from '@/lib/env';
 import { Discovery, DiscoveryType } from '@/types/discovery';
 
@@ -15,6 +16,9 @@ export async function POST(request: NextRequest) {
     if (user) {
       geminiKey = (await resolveGeminiKey(user.id)) || headerGeminiKey;
     } else {
+      if (isAccessControlEnforced()) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       geminiKey = headerGeminiKey;
     }
 

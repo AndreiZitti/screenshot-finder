@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient as createCookieClient } from './server';
+import { isAllowedUser } from '@/lib/auth/access-control';
 
 export async function createClientFromRequest(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
@@ -16,12 +17,12 @@ export async function createClientFromRequest(request: NextRequest) {
       }
     );
     const { data: { user } } = await supabase.auth.getUser();
-    return { supabase, user };
+    return { supabase, user: isAllowedUser(user) ? user : null };
   }
 
   const supabase = await createCookieClient();
   const { data: { user } } = await supabase.auth.getUser();
-  return { supabase, user };
+  return { supabase, user: isAllowedUser(user) ? user : null };
 }
 
 export function isExternalRequest(request: NextRequest): boolean {

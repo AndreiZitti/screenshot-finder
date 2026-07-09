@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isAccessControlEnforced, isAllowedUser } from "@/lib/auth/access-control";
 
 const cookieOptions = {
   path: '/',
@@ -68,8 +69,37 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
+  const pathname = request.nextUrl.pathname;
+  const isApi = pathname.startsWith('/api/');
+  const isLogin = pathname === '/login';
+  const shouldProtectPages = !isApi && isAccessControlEnforced();
+
+  if (shouldProtectPages && !user && !isLogin) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+
+  if (shouldProtectPages && user && !isAllowedUser(user)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    url.searchParams.set('error', 'not_allowed');
+
+    const response = isLogin
+      ? supabaseResponse
+      : NextResponse.redirect(url);
+
+    request.cookies.getAll().forEach(cookie => {
+      if (cookie.name.includes('auth-token')) {
+        response.cookies.delete(cookie.name);
+      }
+    });
+
+    return response;
+  }
+
   // Redirect logged-in users away from login page
-  if (request.nextUrl.pathname === "/login" && user) {
+  if (isLogin && user) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

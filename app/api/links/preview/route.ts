@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClientFromRequest } from '@/lib/supabase/api-client';
 import { LinkPlatform } from '@/types/link';
 
 function detectPlatform(url: string): LinkPlatform {
@@ -30,12 +31,34 @@ function extractOgTag(html: string, property: string): string | null {
 
 export async function POST(request: NextRequest) {
   try {
+    const { user } = await createClientFromRequest(request);
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { url } = body;
 
     if (!url) {
       return NextResponse.json(
         { error: 'URL is required' },
+        { status: 400 }
+      );
+    }
+
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid URL' },
+        { status: 400 }
+      );
+    }
+
+    if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+      return NextResponse.json(
+        { error: 'Only HTTP and HTTPS URLs are supported' },
         { status: 400 }
       );
     }

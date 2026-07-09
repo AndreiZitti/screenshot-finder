@@ -42,6 +42,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 # AI Service
 GEMINI_API_KEY=your-gemini-key      # Image analysis + web search + transcription
 
+# Private access
+APP_ALLOWED_EMAILS=you@example.com  # Comma-separated allowlist
+
 # Optional: Default Notion (users can add their own)
 NOTION_API_KEY=your-notion-key
 NOTION_PAGE_ID=your-page-id
@@ -57,6 +60,12 @@ npm run dev
 ```
 
 Run the migrations in `supabase/migrations/` for the database schema.
+
+### Private deployment
+
+Set `APP_ALLOWED_EMAILS` in production. Only Supabase users whose email is in that comma-separated list can access the app pages or API. Production deploys fail closed when this is empty.
+
+Also disable public signup in Supabase Auth unless you explicitly want other people to request accounts.
 
 ## Programmatic API
 

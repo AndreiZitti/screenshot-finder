@@ -41,6 +41,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
 # AI Service
 GEMINI_API_KEY=your-gemini-key      # Image analysis + web search + transcription
+# GEMINI_MODEL=gemini-2.5-flash     # Optional override
 
 # Private access
 APP_ALLOWED_EMAILS=you@example.com  # Comma-separated allowlist

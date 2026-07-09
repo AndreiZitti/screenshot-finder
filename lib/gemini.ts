@@ -1,6 +1,8 @@
 import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 import { DiscoveryType, DiscoveryInfo } from '@/types/discovery';
 
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
 const TYPE_PROMPTS: Record<DiscoveryType, string> = {
   series: 'Identify the TV show, movie, or anime title shown',
   api_library: 'Identify any programming library, API, SDK, or framework mentioned',
@@ -21,7 +23,7 @@ function getSearchModel(apiKey?: string): GenerativeModel {
   // If a user-provided key is given, always create a fresh instance (no caching)
   if (apiKey) {
     return createClient(apiKey).getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: GEMINI_MODEL,
       tools: [{ googleSearch: {} } as never],
     });
   }
@@ -30,7 +32,7 @@ function getSearchModel(apiKey?: string): GenerativeModel {
   if (!searchModel) {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
     searchModel = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: GEMINI_MODEL,
       tools: [{ googleSearch: {} } as never],
     });
   }
@@ -39,7 +41,7 @@ function getSearchModel(apiKey?: string): GenerativeModel {
 
 function getVisionModel(apiKey?: string): GenerativeModel {
   return createClient(apiKey).getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: GEMINI_MODEL,
   });
 }
 

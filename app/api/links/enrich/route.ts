@@ -36,7 +36,9 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(geminiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    });
 
     const prompt = `You are analyzing a saved link. Based on the URL and metadata below, provide:
 1. A concise 1-2 sentence description of what this link is about.

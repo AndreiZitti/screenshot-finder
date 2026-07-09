@@ -2,12 +2,13 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 async function transcribeWithGemini(audioBuffer: Buffer, mimeType: string, geminiApiKey?: string): Promise<string> {
   const key = geminiApiKey || process.env.GEMINI_API_KEY;
+  const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   if (!key) {
     throw new Error('Gemini API key not available');
   }
 
   const genAI = new GoogleGenerativeAI(key);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const model = genAI.getGenerativeModel({ model: modelName });
 
   const base64Audio = audioBuffer.toString('base64');
 

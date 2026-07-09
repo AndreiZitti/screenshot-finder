@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface Particle {
   x: number;
@@ -17,23 +17,136 @@ interface Particle {
 interface ImageParticleLoaderProps {
   imageFile: File;
   isAnalyzing: boolean;
+  status?: string;
   onComplete?: () => void;
 }
 
 export default function ImageParticleLoader({ 
   imageFile, 
   isAnalyzing,
+  status,
   onComplete 
 }: ImageParticleLoaderProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
   const [phase, setPhase] = useState<'explode' | 'form' | 'complete'>('explode');
+  const phaseRef = useRef<'explode' | 'form' | 'complete'>('explode');
   const particlesRef = useRef<Particle[]>([]);
   const progressRef = useRef(0);
 
   // Card skeleton dimensions (relative to canvas)
   const CARD_WIDTH = 280;
   const CARD_HEIGHT = 160;
+
+  const updatePhase = useCallback((nextPhase: 'explode' | 'form' | 'complete') => {
+    phaseRef.current = nextPhase;
+    setPhase(nextPhase);
+  }, []);
+
+  const animate = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const particles = particlesRef.current;
+    let progress = progressRef.current;
+    const currentPhase = phaseRef.current;
+
+    if (currentPhase === 'explode') {
+      // Explosion phase - particles scatter
+      progress += 0.02;
+
+      particles.forEach((p) => {
+        p.x += p.velocity.x * (1 - progress);
+        p.y += p.velocity.y * (1 - progress);
+        p.velocity.y += 0.1; // Gravity
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = 1 - progress * 0.3;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      if (progress >= 1) {
+        progressRef.current = 0;
+        updatePhase('form');
+      } else {
+        progressRef.current = progress;
+      }
+    } else if (currentPhase === 'form') {
+      // Formation phase - particles move to card skeleton
+      progress += 0.015;
+      const eased = easeOutCubic(Math.min(progress, 1));
+
+      particles.forEach((p) => {
+        const currentX = p.x + (p.targetX - p.x) * 0.08;
+        const currentY = p.y + (p.targetY - p.y) * 0.08;
+        p.x = currentX;
+        p.y = currentY;
+
+        // Fade to gray as they form the skeleton
+        const grayness = eased;
+        ctx.fillStyle = grayness > 0.5
+          ? `rgb(200,200,200)`
+          : p.color;
+        ctx.globalAlpha = 0.7 + eased * 0.3;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * (1 - eased * 0.3), 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Draw skeleton card outline when forming
+      if (eased > 0.5) {
+        const cardX = (canvas.width - CARD_WIDTH) / 2;
+        const cardY = (canvas.height - CARD_HEIGHT) / 2;
+
+        ctx.globalAlpha = (eased - 0.5) * 2;
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.lineWidth = 2;
+        drawRoundedRect(ctx, cardX, cardY, CARD_WIDTH, CARD_HEIGHT, 12);
+        ctx.stroke();
+
+        // Skeleton lines
+        ctx.fillStyle = '#e5e7eb';
+        ctx.fillRect(cardX + 16, cardY + 16, 60, 60); // Image placeholder
+        ctx.fillRect(cardX + 90, cardY + 20, 120, 12); // Title
+        ctx.fillRect(cardX + 90, cardY + 40, 160, 8); // Description line 1
+        ctx.fillRect(cardX + 90, cardY + 54, 140, 8); // Description line 2
+        ctx.fillRect(cardX + 16, cardY + CARD_HEIGHT - 30, 80, 10); // Type badge
+      }
+
+      progressRef.current = progress;
+    } else if (currentPhase === 'complete') {
+      // Draw final skeleton
+      const cardX = (canvas.width - CARD_WIDTH) / 2;
+      const cardY = (canvas.height - CARD_HEIGHT) / 2;
+
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = '#f9fafb';
+      drawRoundedRect(ctx, cardX, cardY, CARD_WIDTH, CARD_HEIGHT, 12);
+      ctx.fill();
+
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Pulsing skeleton effect
+      const pulse = Math.sin(Date.now() / 300) * 0.1 + 0.9;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#e5e7eb';
+      ctx.fillRect(cardX + 16, cardY + 16, 60, 60);
+      ctx.fillRect(cardX + 90, cardY + 20, 120, 12);
+      ctx.fillRect(cardX + 90, cardY + 40, 160, 8);
+      ctx.fillRect(cardX + 90, cardY + 54, 140, 8);
+      ctx.fillRect(cardX + 16, cardY + CARD_HEIGHT - 30, 80, 10);
+    }
+
+    ctx.globalAlpha = 1;
+    animationRef.current = requestAnimationFrame(animate);
+  }, [updatePhase]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -132,7 +245,7 @@ export default function ImageParticleLoader({
 
       particlesRef.current = particles;
       progressRef.current = 0;
-      setPhase('explode');
+      updatePhase('explode');
 
       // Start animation
       animate();
@@ -146,119 +259,15 @@ export default function ImageParticleLoader({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [imageFile]);
+  }, [animate, imageFile, updatePhase]);
 
   // Handle phase transitions based on isAnalyzing
   useEffect(() => {
     if (!isAnalyzing && phase === 'form') {
-      setPhase('complete');
+      updatePhase('complete');
       onComplete?.();
     }
-  }, [isAnalyzing, phase, onComplete]);
-
-  const animate = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const particles = particlesRef.current;
-    let progress = progressRef.current;
-
-    if (phase === 'explode') {
-      // Explosion phase - particles scatter
-      progress += 0.02;
-      
-      particles.forEach((p) => {
-        p.x += p.velocity.x * (1 - progress);
-        p.y += p.velocity.y * (1 - progress);
-        p.velocity.y += 0.1; // Gravity
-        
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = 1 - progress * 0.3;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      if (progress >= 1) {
-        progressRef.current = 0;
-        setPhase('form');
-      } else {
-        progressRef.current = progress;
-      }
-    } else if (phase === 'form') {
-      // Formation phase - particles move to card skeleton
-      progress += 0.015;
-      const eased = easeOutCubic(Math.min(progress, 1));
-
-      particles.forEach((p) => {
-        const currentX = p.x + (p.targetX - p.x) * 0.08;
-        const currentY = p.y + (p.targetY - p.y) * 0.08;
-        p.x = currentX;
-        p.y = currentY;
-
-        // Fade to gray as they form the skeleton
-        const grayness = eased;
-        ctx.fillStyle = grayness > 0.5 
-          ? `rgb(200,200,200)` 
-          : p.color;
-        ctx.globalAlpha = 0.7 + eased * 0.3;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * (1 - eased * 0.3), 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // Draw skeleton card outline when forming
-      if (eased > 0.5) {
-        const cardX = (canvas.width - CARD_WIDTH) / 2;
-        const cardY = (canvas.height - CARD_HEIGHT) / 2;
-        
-        ctx.globalAlpha = (eased - 0.5) * 2;
-        ctx.strokeStyle = '#e5e7eb';
-        ctx.lineWidth = 2;
-        drawRoundedRect(ctx, cardX, cardY, CARD_WIDTH, CARD_HEIGHT, 12);
-        ctx.stroke();
-
-        // Skeleton lines
-        ctx.fillStyle = '#e5e7eb';
-        ctx.fillRect(cardX + 16, cardY + 16, 60, 60); // Image placeholder
-        ctx.fillRect(cardX + 90, cardY + 20, 120, 12); // Title
-        ctx.fillRect(cardX + 90, cardY + 40, 160, 8); // Description line 1
-        ctx.fillRect(cardX + 90, cardY + 54, 140, 8); // Description line 2
-        ctx.fillRect(cardX + 16, cardY + CARD_HEIGHT - 30, 80, 10); // Type badge
-      }
-
-      progressRef.current = progress;
-    } else if (phase === 'complete') {
-      // Draw final skeleton
-      const cardX = (canvas.width - CARD_WIDTH) / 2;
-      const cardY = (canvas.height - CARD_HEIGHT) / 2;
-      
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#f9fafb';
-      drawRoundedRect(ctx, cardX, cardY, CARD_WIDTH, CARD_HEIGHT, 12);
-      ctx.fill();
-      
-      ctx.strokeStyle = '#e5e7eb';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Pulsing skeleton effect
-      const pulse = Math.sin(Date.now() / 300) * 0.1 + 0.9;
-      ctx.globalAlpha = pulse;
-      ctx.fillStyle = '#e5e7eb';
-      ctx.fillRect(cardX + 16, cardY + 16, 60, 60);
-      ctx.fillRect(cardX + 90, cardY + 20, 120, 12);
-      ctx.fillRect(cardX + 90, cardY + 40, 160, 8);
-      ctx.fillRect(cardX + 90, cardY + 54, 140, 8);
-      ctx.fillRect(cardX + 16, cardY + CARD_HEIGHT - 30, 80, 10);
-    }
-
-    ctx.globalAlpha = 1;
-    animationRef.current = requestAnimationFrame(animate);
-  };
+  }, [isAnalyzing, phase, onComplete, updatePhase]);
 
   return (
     <div className="flex flex-col items-center">
@@ -268,9 +277,13 @@ export default function ImageParticleLoader({
         style={{ maxWidth: '100%', height: 'auto' }}
       />
       <p className="mt-3 text-sm text-gray-500">
-        {phase === 'explode' && 'Scanning image...'}
-        {phase === 'form' && 'Analyzing content...'}
-        {phase === 'complete' && 'Searching the web...'}
+        {status || (
+          <>
+            {phase === 'explode' && 'Scanning image...'}
+            {phase === 'form' && 'Analyzing content...'}
+            {phase === 'complete' && 'Searching the web...'}
+          </>
+        )}
       </p>
     </div>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Discovery, DiscoveryType, DISCOVERY_TYPES } from '@/types/discovery';
 import DiscoveryCard from './DiscoveryCard';
 import VoiceRecorder from './VoiceRecorder';
@@ -31,6 +31,8 @@ export default function CaptureZone() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [results, setResults] = useState<Discovery[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [analysisStatus, setAnalysisStatus] = useState('');
 
   // Type selector popup state
   const [showTypePopup, setShowTypePopup] = useState(false);
@@ -66,6 +68,7 @@ export default function CaptureZone() {
       setMode('image-preview');
       setShowTypePopup(true); // Auto-open popup
       setError(null);
+      setSuccessMessage(null);
     }
   }, []);
 
@@ -78,11 +81,14 @@ export default function CaptureZone() {
       }
       setPreviewImages([]);
       setMode('idle');
+      setSuccessMessage('Saved to pending captures. It will upload when you are back online.');
       return;
     }
 
     setIsProcessing(true);
     setError(null);
+    setSuccessMessage(null);
+    setAnalysisStatus('Preparing image...');
 
     const formData = new FormData();
     previewImages.forEach((file) => {
@@ -95,6 +101,7 @@ export default function CaptureZone() {
 
     try {
       const headers = geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : undefined;
+      setAnalysisStatus('Reading screenshot...');
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers,
@@ -106,6 +113,12 @@ export default function CaptureZone() {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to analyze images');
       }
+
+      if (!data.results || data.results.length === 0) {
+        throw new Error('Could not identify anything in that image. Try adding a hint or choose a different type.');
+      }
+
+      setAnalysisStatus('Saving to stash...');
 
       // Save results to local DB
       for (const result of data.results) {
@@ -123,16 +136,23 @@ export default function CaptureZone() {
       setPreviewImages([]);
       setMode('idle');
       setCustomHint('');
+      setSuccessMessage(data.results.length === 1
+        ? 'Saved 1 item to your stash.'
+        : `Saved ${data.results.length} items to your stash.`
+      );
       autoSync();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsProcessing(false);
+      setAnalysisStatus('');
     }
   };
 
   // Handle transcription from voice recorder
   const handleTranscription = (text: string) => {
+    setError(null);
+    setSuccessMessage(null);
     setTranscription(text);
     setMode('transcription-preview');
   };
@@ -142,6 +162,8 @@ export default function CaptureZone() {
     if (!transcription) return;
 
     setIsProcessing(true);
+    setError(null);
+    setSuccessMessage(null);
     try {
       const name = transcription.length > 60
         ? transcription.slice(0, 57) + '...'
@@ -157,6 +179,7 @@ export default function CaptureZone() {
       });
       setTranscription(null);
       setMode('idle');
+      setSuccessMessage('Voice note saved to your stash.');
       autoSync();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save note');
@@ -244,6 +267,7 @@ export default function CaptureZone() {
     setLinkLoading(true);
     setLinkError(null);
     setLinkSuccess(false);
+    setSuccessMessage(null);
 
     try {
       // Fetch OG preview
@@ -254,7 +278,11 @@ export default function CaptureZone() {
       });
 
       const previewData = await previewResponse.json();
-      const name = previewData.title || url;
+      if (!previewResponse.ok) {
+        throw new Error(previewData.error || 'Failed to preview link');
+      }
+
+      const name = previewData.title || previewData.name || url;
       const platform = previewData.platform || 'other';
       const thumbnail = previewData.thumbnail || null;
 
@@ -501,7 +529,7 @@ export default function CaptureZone() {
                   >
                     <path d="M20 6 9 17l-5-5" />
                   </svg>
-                  Link saved!
+                  Link saved. Enriching in the background...
                 </div>
               )}
             </div>
@@ -528,10 +556,10 @@ export default function CaptureZone() {
             {/* Image Preview in Popup */}
             <div className="mb-4 flex justify-center gap-2">
               {previewImages.slice(0, 3).map((file, index) => (
-                <img
+                <FileThumbnail
                   key={index}
-                  src={URL.createObjectURL(file)}
-                  alt={`Preview ${index + 1}`}
+                  file={file}
+                  label={`Preview ${index + 1}`}
                   className="h-16 w-16 rounded-lg object-cover"
                 />
               ))}
@@ -592,9 +620,10 @@ export default function CaptureZone() {
                   setShowTypePopup(false);
                   analyzeImages();
                 }}
-                className="flex-1 rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+                disabled={previewImages.length === 0 || isProcessing}
+                className="flex-1 rounded-lg bg-gray-900 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Analyze
+                {isProcessing ? 'Analyzing...' : 'Analyze'}
               </button>
             </div>
           </div>
@@ -606,7 +635,53 @@ export default function CaptureZone() {
         <ImageParticleLoader
           imageFile={previewImages[0]}
           isAnalyzing={isProcessing}
+          status={analysisStatus}
         />
+      )}
+
+      {mode === 'image-preview' && !showTypePopup && !isProcessing && previewImages.length > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {previewImages.slice(0, 3).map((file, index) => (
+                <FileThumbnail
+                  key={`${file.name}-${index}`}
+                  file={file}
+                  label={`Selected screenshot ${index + 1}`}
+                  className="h-12 w-12 rounded-lg border-2 border-white object-cover"
+                />
+              ))}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-900">
+                {previewImages.length === 1 ? 'Screenshot ready' : `${previewImages.length} screenshots ready`}
+              </p>
+              <p className="text-xs text-gray-500">
+                Add a hint or retry analysis when ready.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => setShowTypePopup(true)}
+              className="rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Edit
+            </button>
+            <button
+              onClick={analyzeImages}
+              className="rounded-lg bg-gray-900 px-3 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              Retry
+            </button>
+            <button
+              onClick={cancelImagePreview}
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 hover:bg-gray-100"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Transcription Preview Mode */}
@@ -624,8 +699,27 @@ export default function CaptureZone() {
 
       {/* Error Display */}
       {error && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">
-          {error}
+        <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-sm text-red-700">
+          <div className="font-medium">Something went wrong</div>
+          <div className="mt-1">{error}</div>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="flex items-center gap-2 rounded-lg border border-green-100 bg-green-50 p-4 text-sm text-green-700">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4 flex-shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+          {successMessage}
         </div>
       )}
 
@@ -651,5 +745,32 @@ export default function CaptureZone() {
         </div>
       )}
     </div>
+  );
+}
+
+function FileThumbnail({
+  file,
+  label,
+  className,
+}: {
+  file: File;
+  label: string;
+  className: string;
+}) {
+  const [url, setUrl] = useState('');
+
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
+
+  return (
+    <div
+      role="img"
+      aria-label={label}
+      className={`${className} bg-gray-100 bg-cover bg-center`}
+      style={url ? { backgroundImage: `url(${url})` } : undefined}
+    />
   );
 }

@@ -13,11 +13,14 @@ const TYPE_PROMPTS: Record<DiscoveryType, string> = {
 let genAI: GoogleGenerativeAI | null = null;
 let searchModel: GenerativeModel | null = null;
 
+function createClient(apiKey?: string): GoogleGenerativeAI {
+  return new GoogleGenerativeAI(apiKey || process.env.GEMINI_API_KEY!);
+}
+
 function getSearchModel(apiKey?: string): GenerativeModel {
   // If a user-provided key is given, always create a fresh instance (no caching)
   if (apiKey) {
-    const userGenAI = new GoogleGenerativeAI(apiKey);
-    return userGenAI.getGenerativeModel({
+    return createClient(apiKey).getGenerativeModel({
       model: 'gemini-2.0-flash',
       tools: [{ googleSearch: {} } as never],
     });
@@ -32,6 +35,12 @@ function getSearchModel(apiKey?: string): GenerativeModel {
     });
   }
   return searchModel;
+}
+
+function getVisionModel(apiKey?: string): GenerativeModel {
+  return createClient(apiKey).getGenerativeModel({
+    model: 'gemini-2.0-flash',
+  });
 }
 
 const TYPE_SEARCH_PROMPTS: Record<DiscoveryType, string> = {
@@ -77,10 +86,9 @@ Respond with ONLY a JSON object in this exact format, no other text:
 
 If you truly cannot find information after searching, use "Unknown" for that field.`;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-
   try {
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
@@ -102,24 +110,20 @@ export async function analyzeImage(
   hint?: string,
   apiKey?: string
 ): Promise<{ name: string } & DiscoveryInfo> {
-  const model = getSearchModel(apiKey);
+  const model = getVisionModel(apiKey);
 
   const hintSection = hint
-    ? `\n\nUSER HINT: The user provided this hint about the image: "${hint}". Use this to help identify and search for the subject.`
+    ? `\n\nUSER HINT: The user provided this hint about the image: "${hint}". Use this to help identify the subject.`
     : '';
 
   const prompt = `You are analyzing a screenshot. ${TYPE_PROMPTS[type]}${hintSection}
 
-First, identify what this is. Then search the web to find detailed information about it.
-
-${TYPE_SEARCH_PROMPTS[type]}
-
-IMPORTANT: You MUST search the web to find accurate, up-to-date information.
+Identify what this is. Do not search the web yet.
 
 Respond with ONLY a JSON object in this exact format, no other text:
-{"name": "exact name identified", "description": "2-3 sentence description", "link": "official or most relevant URL", "metadata": {...}}
+{"name": "exact name identified"}
 
-If you cannot identify the subject, respond with: {"name": "Unknown", "description": "", "link": "", "metadata": {}}`;
+If you cannot identify the subject, respond with: {"name": "Unknown"}`;
 
   const result = await model.generateContent([
     { text: prompt },
@@ -132,13 +136,12 @@ If you cannot identify the subject, respond with: {"name": "Unknown", "descripti
   ]);
 
   const text = result.response.text();
+  let name = 'Unknown';
 
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    return JSON.parse(text);
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(text);
+    name = typeof parsed.name === 'string' ? parsed.name.trim() : 'Unknown';
   } catch {
     return {
       name: 'Unknown',
@@ -147,4 +150,22 @@ If you cannot identify the subject, respond with: {"name": "Unknown", "descripti
       metadata: {},
     };
   }
+
+  if (!name || name === 'Unknown') {
+    return {
+      name: 'Unknown',
+      description: '',
+      link: '',
+      metadata: {},
+    };
+  }
+
+  const info = await getDiscoveryInfo(name, type, apiKey);
+
+  return {
+    name,
+    description: info.description,
+    link: info.link,
+    metadata: info.metadata,
+  };
 }

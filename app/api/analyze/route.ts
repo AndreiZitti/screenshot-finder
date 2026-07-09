@@ -89,8 +89,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ results });
   } catch (error) {
     console.error('Analyze error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+
     return NextResponse.json(
-      { error: 'Failed to analyze images' },
+      {
+        error: isDevelopment
+          ? `Failed to analyze images: ${message}`
+          : 'Failed to analyze images',
+      },
       { status: 500 }
     );
   }

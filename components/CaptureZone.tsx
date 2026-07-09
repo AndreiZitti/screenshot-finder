@@ -11,6 +11,7 @@ import ImageParticleLoader from './ImageParticleLoader';
 import { createDiscovery } from '@/lib/db/discoveries-dal';
 import { createLink } from '@/lib/db/links-dal';
 import { autoSync } from '@/lib/db/sync-service';
+import { useApiKeys } from '@/hooks/useApiKeys';
 
 const TYPE_ICONS: Record<DiscoveryType, string> = {
   series: '📺',
@@ -46,6 +47,7 @@ export default function CaptureZone() {
   const [linkLoading, setLinkLoading] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linkSuccess, setLinkSuccess] = useState(false);
+  const { geminiApiKey } = useApiKeys();
 
   const {
     isOnline,
@@ -92,8 +94,10 @@ export default function CaptureZone() {
     }
 
     try {
+      const headers = geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : undefined;
       const response = await fetch('/api/analyze', {
         method: 'POST',
+        headers,
         body: formData,
       });
 
@@ -257,7 +261,10 @@ export default function CaptureZone() {
       // Kick off AI enrichment in parallel (fire-and-forget for speed)
       const enrichPromise = fetch('/api/links/enrich', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : {}),
+        },
         body: JSON.stringify({ url, name, platform }),
       })
         .then((res) => res.json())

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useVoiceRecorder } from '@/hooks/useVoiceRecorder';
 import { useToast } from '@/contexts/ToastContext';
+import { useApiKeys } from '@/hooks/useApiKeys';
 
 interface VoiceRecorderProps {
   onTranscription: (transcription: string) => void;
@@ -12,6 +13,7 @@ interface VoiceRecorderProps {
 export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecorderProps) {
   const { state, audioBlob, duration, error, startRecording, stopRecording, reset } = useVoiceRecorder();
   const { showToast } = useToast();
+  const { geminiApiKey } = useApiKeys();
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -51,6 +53,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
 
       const response = await fetch('/api/transcribe', {
         method: 'POST',
+        headers: geminiApiKey ? { 'x-gemini-api-key': geminiApiKey } : undefined,
         body: formData,
       });
 

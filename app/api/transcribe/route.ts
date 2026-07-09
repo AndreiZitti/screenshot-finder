@@ -9,10 +9,12 @@ export async function POST(request: NextRequest) {
 
     let geminiKey: string | null = null;
 
+    const headerGeminiKey = request.headers.get('x-gemini-api-key');
+
     if (user) {
-      geminiKey = await resolveGeminiKey(user.id);
+      geminiKey = (await resolveGeminiKey(user.id)) || headerGeminiKey;
     } else {
-      geminiKey = request.headers.get('x-gemini-api-key');
+      geminiKey = headerGeminiKey;
     }
 
     if (!geminiKey) {

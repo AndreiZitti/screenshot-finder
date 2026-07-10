@@ -23,8 +23,12 @@ export async function POST(request: NextRequest) {
 
     if (!geminiKey) {
       return NextResponse.json(
-        { error: 'No API key available. Set your Gemini key in Settings or pass via x-gemini-api-key header.', code: 'NO_API_KEY' },
-        { status: 401 }
+        {
+          error:
+            'No API key available. Set your Gemini key in Settings or pass via x-gemini-api-key header.',
+          code: 'NO_API_KEY',
+        },
+        { status: 401 },
       );
     }
 
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (!contentType.includes('multipart/form-data')) {
       return NextResponse.json(
         { error: 'Audio upload must use multipart/form-data' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,10 +44,7 @@ export async function POST(request: NextRequest) {
     const audio = formData.get('audio') as File;
 
     if (!audio) {
-      return NextResponse.json(
-        { error: 'No audio provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No audio provided' }, { status: 400 });
     }
 
     const buffer = Buffer.from(await audio.arrayBuffer());
@@ -56,9 +57,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ transcription: text, text });
   } catch (error) {
     console.error('Transcribe error:', error);
-    return NextResponse.json(
-      { error: 'Failed to transcribe audio' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to transcribe audio' }, { status: 500 });
   }
 }

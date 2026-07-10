@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientFromRequest } from '@/lib/supabase/api-client';
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { supabase, user } = await createClientFromRequest(request);
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -32,90 +26,58 @@ export async function PATCH(
 
       if (error) {
         console.error('Supabase update error:', error);
-        return NextResponse.json(
-          { error: 'Failed to update link' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: 'Failed to update link' }, { status: 500 });
       }
 
       return NextResponse.json({ link: data });
     }
 
-    return NextResponse.json(
-      { error: 'Invalid request body' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   } catch (error) {
     console.error('Update error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update link' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to update link' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { supabase, user } = await createClientFromRequest(request);
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
 
-    const { data: existing } = await supabase
-      .from('links')
-      .select('id')
-      .eq('id', id)
-      .single();
+    const { data: existing } = await supabase.from('links').select('id').eq('id', id).single();
 
     if (!existing) {
-      return NextResponse.json(
-        { error: 'Link not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Link not found' }, { status: 404 });
     }
 
-    const { error } = await supabase
-      .from('links')
-      .delete()
-      .eq('id', id);
+    const { error } = await supabase.from('links').delete().eq('id', id);
 
     if (error) {
       console.error('Supabase delete error:', error);
-      return NextResponse.json(
-        { error: 'Failed to delete link' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to delete link' }, { status: 500 });
     }
 
-    const { data: stillExists } = await supabase
-      .from('links')
-      .select('id')
-      .eq('id', id)
-      .single();
+    const { data: stillExists } = await supabase.from('links').select('id').eq('id', id).single();
 
     if (stillExists) {
       console.error('Delete failed - item still exists (likely RLS blocking)');
       return NextResponse.json(
         { error: 'Delete blocked - check database permissions' },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Delete error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete link' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete link' }, { status: 500 });
   }
 }

@@ -7,10 +7,12 @@ Evolve Series Finder into **z-stash** — a capture inbox for knowledge and idea
 ## Core Concept
 
 Two input methods:
+
 - **Screenshots** — snap what you see, AI identifies and researches it
 - **Voice notes** — speak your thought, decide if it's a raw note or something to research
 
 Two content types:
+
 - **Discoveries** — researched items with AI-enriched metadata
 - **Notes** — raw transcriptions, minimal structure
 
@@ -59,9 +61,11 @@ No prompts, no tracking. One action, done.
 **Capture** — Upload/record zone. Where everything enters.
 
 **Discoveries** — Researched items with filter tabs:
+
 - All | Series | APIs | AI Tips | Gadgets | Other
 
 **Notes** — Raw voice transcriptions. Minimal list:
+
 - Transcription snippet, timestamp
 - Actions: expand, archive, delete
 
@@ -112,7 +116,7 @@ interface Discovery {
   metadata: Record<string, string | null> | null;
   image_url: string | null;
   created_at: string;
-  archived_at: string | null;  // NEW
+  archived_at: string | null; // NEW
 }
 
 interface Note {
@@ -164,15 +168,18 @@ Browser MediaRecorder API — no external dependencies. Records webm/opus format
 **VoiceRecorder** — Record button with states (idle, recording, transcribing)
 
 **TranscriptionPreview** — Shows transcription with action buttons:
+
 - "Save as Note" — direct save
 - "Research This" — expands to category picker
 
 **ImagePreview** — Staged upload:
+
 - Thumbnail previews with remove button
 - Category dropdown
 - Explicit "Analyze" submit button
 
 **NoteCard** — Minimal note display:
+
 - Transcription snippet
 - Timestamp
 - Archive/delete actions
@@ -186,22 +193,26 @@ Browser MediaRecorder API — no external dependencies. Records webm/opus format
 ## Implementation Order
 
 ### Phase 1: Foundation
+
 1. Rename project to z-stash
 2. Add `archived_at` to discoveries table
 3. Create `notes` table
 4. Add archive/unarchive API endpoints
 
 ### Phase 2: Archive Flow
+
 5. Add archive button to DiscoveryCard
 6. Create Archive page
 7. Filter archived from Discoveries page
 
 ### Phase 3: Notes
+
 8. Create Note types and API routes
 9. Create NoteCard component
 10. Create Notes page
 
 ### Phase 4: Voice Recording
+
 11. Create `useVoiceRecorder` hook
 12. Create `lib/whisper.ts`
 13. Create `/api/transcribe` endpoint
@@ -209,22 +220,24 @@ Browser MediaRecorder API — no external dependencies. Records webm/opus format
 15. Create TranscriptionPreview component
 
 ### Phase 5: Staged Upload
+
 16. Refactor UploadZone for staged flow
 
 ### Phase 6: Navigation
+
 17. Update Header with new nav
 18. Add routing for new pages
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Framework | Next.js 16, React 19 |
-| Styling | Tailwind CSS |
-| Database | Supabase |
-| Image Analysis | Groq (Llama 4 Scout) |
-| Transcription | Groq (Whisper Large v3 Turbo) |
-| Web Search | Gemini 2.5 Flash + Grounding |
+| Component      | Technology                    |
+| -------------- | ----------------------------- |
+| Framework      | Next.js 16, React 19          |
+| Styling        | Tailwind CSS                  |
+| Database       | Supabase                      |
+| Image Analysis | Groq (Llama 4 Scout)          |
+| Transcription  | Groq (Whisper Large v3 Turbo) |
+| Web Search     | Gemini 2.5 Flash + Grounding  |
 
 ## Discovery Types (unchanged)
 

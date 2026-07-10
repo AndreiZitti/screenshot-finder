@@ -44,7 +44,7 @@ export async function getAllPendingCaptures(): Promise<PendingCapture[]> {
   try {
     const allKeys = await keys();
     const pendingKeys = allKeys.filter(
-      (key) => typeof key === 'string' && key.startsWith(STORAGE_KEY_PREFIX)
+      (key) => typeof key === 'string' && key.startsWith(STORAGE_KEY_PREFIX),
     );
 
     const captures: PendingCapture[] = [];
@@ -56,7 +56,7 @@ export async function getAllPendingCaptures(): Promise<PendingCapture[]> {
     }
 
     return captures.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   } catch (error) {
     console.error('Failed to get all captures from IndexedDB:', error);
@@ -66,7 +66,7 @@ export async function getAllPendingCaptures(): Promise<PendingCapture[]> {
 
 export async function updateCaptureStatus(
   id: string,
-  status: PendingCapture['status']
+  status: PendingCapture['status'],
 ): Promise<boolean> {
   try {
     const capture = await getPendingCapture(id);
@@ -78,17 +78,5 @@ export async function updateCaptureStatus(
   } catch (error) {
     console.error('Failed to update capture status in IndexedDB:', error);
     return false;
-  }
-}
-
-export async function getPendingCount(): Promise<number> {
-  try {
-    const allKeys = await keys();
-    return allKeys.filter(
-      (key) => typeof key === 'string' && key.startsWith(STORAGE_KEY_PREFIX)
-    ).length;
-  } catch (error) {
-    console.error('Failed to get pending count from IndexedDB:', error);
-    return 0;
   }
 }

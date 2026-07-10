@@ -2,28 +2,25 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Discovery } from '@/types/discovery';
-import { Note } from '@/types/note';
 import { Link } from '@/types/link';
-import { getAllDiscoveries, deleteDiscovery as deleteLocalDiscovery } from '@/lib/db/discoveries-dal';
-import { getAllNotes, deleteNote as deleteLocalNote } from '@/lib/db/notes-dal';
+import {
+  getAllDiscoveries,
+  deleteDiscovery as deleteLocalDiscovery,
+} from '@/lib/db/discoveries-dal';
 import { getAllLinks, deleteLink as deleteLocalLink } from '@/lib/db/links-dal';
 
 interface UseStashCacheReturn {
   discoveries: Discovery[];
-  notes: Note[];
   links: Link[];
   isLoading: boolean;
   isOffline: boolean;
-  isCached: boolean;
   refetch: () => Promise<void>;
   removeDiscovery: (id: string) => void;
-  removeNote: (id: string) => void;
   removeLink: (id: string) => void;
 }
 
 export function useStashCache(): UseStashCacheReturn {
   const [discoveries, setDiscoveries] = useState<Discovery[]>([]);
-  const [notes, setNotes] = useState<Note[]>([]);
   const [links, setLinks] = useState<Link[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
@@ -31,18 +28,15 @@ export function useStashCache(): UseStashCacheReturn {
   // Load all data from local IndexedDB
   const loadFromLocal = useCallback(async () => {
     try {
-      const [localDiscoveries, localNotes, localLinks] = await Promise.all([
+      const [localDiscoveries, localLinks] = await Promise.all([
         getAllDiscoveries(false),
-        getAllNotes(false),
         getAllLinks(false),
       ]);
       setDiscoveries(localDiscoveries);
-      setNotes(localNotes);
       setLinks(localLinks);
     } catch (error) {
       console.error('Failed to load from local DB:', error);
       setDiscoveries([]);
-      setNotes([]);
       setLinks([]);
     }
   }, []);
@@ -59,13 +53,6 @@ export function useStashCache(): UseStashCacheReturn {
   const removeDiscovery = useCallback((id: string) => {
     deleteLocalDiscovery(id).then(() => {
       setDiscoveries((prev) => prev.filter((d) => d.id !== id));
-    });
-  }, []);
-
-  // Remove note from local DB and state
-  const removeNote = useCallback((id: string) => {
-    deleteLocalNote(id).then(() => {
-      setNotes((prev) => prev.filter((n) => n.id !== id));
     });
   }, []);
 
@@ -102,14 +89,11 @@ export function useStashCache(): UseStashCacheReturn {
 
   return {
     discoveries,
-    notes,
     links,
     isLoading,
     isOffline,
-    isCached: false, // local DB is always fresh
     refetch,
     removeDiscovery,
-    removeNote,
     removeLink,
   };
 }

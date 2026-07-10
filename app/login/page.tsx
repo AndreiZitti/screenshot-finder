@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [accessError, setAccessError] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -31,11 +31,11 @@ export default function LoginPage() {
       if (error) {
         setError(error.message);
       } else {
-        router.push("/");
+        router.push('/');
         router.refresh();
       }
     } catch {
-      setError("An unexpected error occurred");
+      setError('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -66,10 +66,7 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 Email
               </label>
               <input
@@ -84,10 +81,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 Password
               </label>
               <input
@@ -106,17 +100,16 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-3 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white font-medium rounded-lg transition-colors"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </form>
-
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6">
           Need an account? Contact{' '}
-          <a 
-            href="https://zitti.ro" 
-            target="_blank" 
+          <a
+            href="https://zitti.ro"
+            target="_blank"
             rel="noopener noreferrer"
             className="text-gray-900 hover:underline"
           >

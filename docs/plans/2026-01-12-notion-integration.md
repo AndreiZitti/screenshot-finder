@@ -15,6 +15,7 @@
 **Step 1: Install dependency**
 
 Run:
+
 ```bash
 npm install @notionhq/client
 ```
@@ -31,6 +32,7 @@ git commit -m "chore: add @notionhq/client dependency"
 ## Task 2: Create Notion Library
 
 **Files:**
+
 - Create: `lib/notion.ts`
 
 **Step 1: Create the Notion client wrapper**
@@ -57,7 +59,9 @@ export function extractPageId(pageUrlOrId: string): string {
     return match[1].replace(/-/g, '');
   }
   // Try to extract from URL with dashes
-  const urlMatch = pageUrlOrId.match(/([a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12})/i);
+  const urlMatch = pageUrlOrId.match(
+    /([a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12})/i,
+  );
   if (urlMatch) {
     return urlMatch[1].replace(/-/g, '');
   }
@@ -73,14 +77,16 @@ export interface SendToNotionParams {
   link?: string;
 }
 
-export async function sendToNotion(params: SendToNotionParams): Promise<{ success: boolean; error?: string }> {
+export async function sendToNotion(
+  params: SendToNotionParams,
+): Promise<{ success: boolean; error?: string }> {
   const { credentials, type, name, description, transcription, link } = params;
-  
+
   const client = createNotionClient(credentials.apiKey);
   const pageId = extractPageId(credentials.pageId);
-  
+
   const timestamp = new Date().toLocaleString();
-  
+
   let text: string;
   if (type === 'note') {
     text = `[${timestamp}] Note: ${transcription}`;
@@ -120,10 +126,12 @@ export async function sendToNotion(params: SendToNotionParams): Promise<{ succes
   }
 }
 
-export async function testNotionConnection(credentials: NotionCredentials): Promise<{ success: boolean; pageName?: string; error?: string }> {
+export async function testNotionConnection(
+  credentials: NotionCredentials,
+): Promise<{ success: boolean; pageName?: string; error?: string }> {
   const client = createNotionClient(credentials.apiKey);
   const pageId = extractPageId(credentials.pageId);
-  
+
   try {
     const page = await client.pages.retrieve({ page_id: pageId });
     // Extract page title
@@ -155,6 +163,7 @@ git commit -m "feat: add Notion client library"
 ## Task 3: Create Notion API Route
 
 **Files:**
+
 - Create: `app/api/notion/route.ts`
 
 **Step 1: Create the API route**
@@ -170,47 +179,52 @@ function getCredentials(bodyCredentials?: Partial<NotionCredentials>): NotionCre
   // Priority: env variables for owner
   const envApiKey = process.env.NOTION_API_KEY;
   const envPageId = process.env.NOTION_PAGE_ID;
-  
+
   if (envApiKey && envPageId) {
     return { apiKey: envApiKey, pageId: envPageId };
   }
-  
+
   // Fall back to user-provided credentials
   if (bodyCredentials?.apiKey && bodyCredentials?.pageId) {
     return { apiKey: bodyCredentials.apiKey, pageId: bodyCredentials.pageId };
   }
-  
+
   return null;
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, type, name, description, transcription, link, credentials: bodyCredentials } = body;
-    
+    const {
+      action,
+      type,
+      name,
+      description,
+      transcription,
+      link,
+      credentials: bodyCredentials,
+    } = body;
+
     const credentials = getCredentials(bodyCredentials);
-    
+
     if (!credentials) {
       return NextResponse.json(
         { error: 'Notion credentials not configured. Please set up in Settings.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
-    
+
     // Test connection action
     if (action === 'test') {
       const result = await testNotionConnection(credentials);
       return NextResponse.json(result);
     }
-    
+
     // Send to Notion action
     if (!type) {
-      return NextResponse.json(
-        { error: 'Missing type parameter' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing type parameter' }, { status: 400 });
     }
-    
+
     const result = await sendToNotion({
       credentials,
       type,
@@ -219,21 +233,15 @@ export async function POST(request: NextRequest) {
       transcription,
       link,
     });
-    
+
     if (result.success) {
       return NextResponse.json({ success: true });
     } else {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 500 });
     }
   } catch (error) {
     console.error('Notion API route error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 ```
@@ -250,6 +258,7 @@ git commit -m "feat: add Notion API route"
 ## Task 4: Create useNotionSettings Hook
 
 **Files:**
+
 - Create: `hooks/useNotionSettings.ts`
 
 **Step 1: Create the hook**
@@ -292,15 +301,17 @@ export function useNotionSettings() {
 
       // Fall back to Supabase
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (user) {
         const { data } = await supabase
           .from('user_settings')
           .select('notion_api_key, notion_page_id')
           .eq('user_id', user.id)
           .single();
-        
+
         if (data?.notion_api_key && data?.notion_page_id) {
           const loadedSettings = {
             apiKey: data.notion_api_key,
@@ -327,19 +338,19 @@ export function useNotionSettings() {
 
       // Also save to Supabase for cross-device sync
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (user) {
-        await supabase
-          .from('user_settings')
-          .upsert({
-            user_id: user.id,
-            notion_api_key: newSettings.apiKey,
-            notion_page_id: newSettings.pageId,
-            updated_at: new Date().toISOString(),
-          });
+        await supabase.from('user_settings').upsert({
+          user_id: user.id,
+          notion_api_key: newSettings.apiKey,
+          notion_page_id: newSettings.pageId,
+          updated_at: new Date().toISOString(),
+        });
       }
-      
+
       return { success: true };
     } catch (error) {
       console.error('Failed to save Notion settings:', error);
@@ -352,15 +363,14 @@ export function useNotionSettings() {
   const clearSettings = useCallback(async () => {
     localStorage.removeItem(STORAGE_KEY);
     setSettings(null);
-    
+
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     if (user) {
-      await supabase
-        .from('user_settings')
-        .delete()
-        .eq('user_id', user.id);
+      await supabase.from('user_settings').delete().eq('user_id', user.id);
     }
   }, []);
 
@@ -387,6 +397,7 @@ git commit -m "feat: add useNotionSettings hook"
 ## Task 5: Create Supabase Migration
 
 **Files:**
+
 - Create: `supabase/migrations/20260112_add_user_settings.sql`
 
 **Step 1: Create the migration**
@@ -431,6 +442,7 @@ git commit -m "feat: add user_settings table migration"
 ## Task 6: Create Settings Page
 
 **Files:**
+
 - Create: `app/settings/page.tsx`
 
 **Step 1: Create the settings page**
@@ -444,7 +456,8 @@ import { useState } from 'react';
 import { useNotionSettings } from '@/hooks/useNotionSettings';
 
 export default function SettingsPage() {
-  const { settings, isLoading, isSaving, saveSettings, clearSettings, hasSettings } = useNotionSettings();
+  const { settings, isLoading, isSaving, saveSettings, clearSettings, hasSettings } =
+    useNotionSettings();
   const [apiKey, setApiKey] = useState('');
   const [pageUrl, setPageUrl] = useState('');
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
@@ -478,7 +491,7 @@ export default function SettingsPage() {
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         setTestStatus('success');
         setTestMessage(`Connected to "${result.pageName}"`);
@@ -494,7 +507,7 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     if (!apiKey || !pageUrl) return;
-    
+
     const result = await saveSettings({ apiKey, pageId: pageUrl });
     if (result.success) {
       setTestStatus('success');
@@ -550,13 +563,40 @@ export default function SettingsPage() {
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showApiKey ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
                   </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
                   </svg>
                 )}
               </button>
@@ -586,9 +626,7 @@ export default function SettingsPage() {
               placeholder="https://notion.so/Your-Page-abc123..."
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-500"
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Share the page with your integration first
-            </p>
+            <p className="mt-1 text-xs text-gray-500">Share the page with your integration first</p>
           </div>
 
           {testStatus !== 'idle' && (
@@ -597,8 +635,8 @@ export default function SettingsPage() {
                 testStatus === 'testing'
                   ? 'bg-gray-100 text-gray-600'
                   : testStatus === 'success'
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-red-50 text-red-700'
               }`}
             >
               {testStatus === 'testing' ? 'Testing connection...' : testMessage}
@@ -648,6 +686,7 @@ git commit -m "feat: add Settings page with Notion configuration"
 ## Task 7: Add Settings to Navigation
 
 **Files:**
+
 - Modify: `components/BottomNav.tsx`
 
 **Step 1: Add settings nav item**
@@ -687,6 +726,7 @@ git commit -m "feat: add Settings to bottom navigation"
 ## Task 8: Create useSendToNotion Hook
 
 **Files:**
+
 - Create: `hooks/useSendToNotion.ts`
 
 **Step 1: Create the hook**
@@ -714,39 +754,42 @@ export function useSendToNotion() {
   const [status, setStatus] = useState<SendStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const send = useCallback(async (options: SendToNotionOptions) => {
-    setStatus('sending');
-    setError(null);
+  const send = useCallback(
+    async (options: SendToNotionOptions) => {
+      setStatus('sending');
+      setError(null);
 
-    try {
-      const response = await fetch('/api/notion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...options,
-          credentials: settings,
-        }),
-      });
+      try {
+        const response = await fetch('/api/notion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...options,
+            credentials: settings,
+          }),
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (result.success) {
-        setStatus('success');
-        // Reset to idle after 2 seconds
-        setTimeout(() => setStatus('idle'), 2000);
-        return { success: true };
-      } else {
+        if (result.success) {
+          setStatus('success');
+          // Reset to idle after 2 seconds
+          setTimeout(() => setStatus('idle'), 2000);
+          return { success: true };
+        } else {
+          setStatus('error');
+          setError(result.error || 'Failed to send to Notion');
+          return { success: false, error: result.error };
+        }
+      } catch (err) {
         setStatus('error');
-        setError(result.error || 'Failed to send to Notion');
-        return { success: false, error: result.error };
+        const message = err instanceof Error ? err.message : 'Failed to send to Notion';
+        setError(message);
+        return { success: false, error: message };
       }
-    } catch (err) {
-      setStatus('error');
-      const message = err instanceof Error ? err.message : 'Failed to send to Notion';
-      setError(message);
-      return { success: false, error: message };
-    }
-  }, [settings]);
+    },
+    [settings],
+  );
 
   const reset = useCallback(() => {
     setStatus('idle');
@@ -775,6 +818,7 @@ git commit -m "feat: add useSendToNotion hook"
 ## Task 9: Add Notion Button to DiscoveryCard
 
 **Files:**
+
 - Modify: `components/DiscoveryCard.tsx`
 
 **Step 1: Import hook and add button state**
@@ -814,23 +858,49 @@ In the button group div (after archive button, before delete button), add:
     notionStatus === 'success'
       ? 'text-green-500'
       : notionStatus === 'error'
-      ? 'text-red-500 hover:bg-red-50'
-      : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+        ? 'text-red-500 hover:bg-red-50'
+        : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
   }`}
   title="Send to Notion"
 >
   {notionStatus === 'sending' ? (
-    <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <svg
+      className="h-5 w-5 animate-spin"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
     </svg>
   ) : notionStatus === 'success' ? (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   ) : (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-5 w-5"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+      />
     </svg>
   )}
 </button>
@@ -848,6 +918,7 @@ git commit -m "feat: add Send to Notion button to DiscoveryCard"
 ## Task 10: Add Notion Button to NoteCard
 
 **Files:**
+
 - Modify: `components/NoteCard.tsx`
 
 **Step 1: Import hook**
@@ -889,6 +960,7 @@ git commit -m "feat: add Send to Notion button to NoteCard"
 ## Task 11: Add Environment Variable Documentation
 
 **Files:**
+
 - Modify: `.env.local` (add comments)
 
 **Step 1: Document new env vars**
@@ -915,6 +987,7 @@ git commit -m "docs: add Notion environment variables" --allow-empty
 **Step 1: Build the application**
 
 Run:
+
 ```bash
 npm run build
 ```
@@ -924,11 +997,13 @@ Expected: Build succeeds with no errors.
 **Step 2: Start dev server and test**
 
 Run:
+
 ```bash
 npm run dev
 ```
 
 Manual test:
+
 1. Go to /settings
 2. Enter Notion API key and page URL
 3. Click "Test Connection"

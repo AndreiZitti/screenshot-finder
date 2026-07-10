@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   PendingCapture,
   getAllPendingCaptures,
@@ -26,9 +26,7 @@ async function getLocalGeminiKey(): Promise<string | null> {
 }
 
 function nameFromTranscription(transcription: string): string {
-  return transcription.length > 60
-    ? `${transcription.slice(0, 57)}...`
-    : transcription;
+  return transcription.length > 60 ? `${transcription.slice(0, 57)}...` : transcription;
 }
 
 export function useOfflineQueue() {
@@ -36,7 +34,6 @@ export function useOfflineQueue() {
   const [pendingCaptures, setPendingCaptures] = useState<PendingCapture[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [isSyncing, setIsSyncing] = useState(false);
-  const syncScheduledRef = useRef(false);
 
   // Track online status
   useEffect(() => {
@@ -81,7 +78,7 @@ export function useOfflineQueue() {
       await loadPending();
       return capture.id;
     },
-    [loadPending]
+    [loadPending],
   );
 
   // Remove a pending capture
@@ -90,7 +87,7 @@ export function useOfflineQueue() {
       await deletePendingCapture(id);
       await loadPending();
     },
-    [loadPending]
+    [loadPending],
   );
 
   // Retry a failed capture
@@ -99,87 +96,84 @@ export function useOfflineQueue() {
       await updateCaptureStatus(id, 'pending');
       await loadPending();
     },
-    [loadPending]
+    [loadPending],
   );
 
   // Sync a single capture
-  const syncCapture = useCallback(
-    async (capture: PendingCapture): Promise<boolean> => {
-      try {
-        await updateCaptureStatus(capture.id, 'processing');
-        const geminiKey = await getLocalGeminiKey();
-        const headers = geminiKey ? { 'x-gemini-api-key': geminiKey } : undefined;
+  const syncCapture = useCallback(async (capture: PendingCapture): Promise<boolean> => {
+    try {
+      await updateCaptureStatus(capture.id, 'processing');
+      const geminiKey = await getLocalGeminiKey();
+      const headers = geminiKey ? { 'x-gemini-api-key': geminiKey } : undefined;
 
-        if (capture.type === 'image') {
-          const formData = new FormData();
-          formData.append('images', capture.blob, 'offline-capture.jpg');
-          formData.append('type', capture.selectedType || 'other');
+      if (capture.type === 'image') {
+        const formData = new FormData();
+        formData.append('images', capture.blob, 'offline-capture.jpg');
+        formData.append('type', capture.selectedType || 'other');
 
-          const response = await fetch('/api/analyze', {
-            method: 'POST',
-            headers,
-            body: formData,
-          });
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers,
+          body: formData,
+        });
 
-          if (!response.ok) throw new Error('Analysis failed');
+        if (!response.ok) throw new Error('Analysis failed');
 
-          const data = await response.json();
-          for (const result of data.results || []) {
-            await createDiscovery({
-              type: result.type,
-              name: result.name,
-              description: result.description,
-              link: result.link,
-              metadata: result.metadata,
-              image_url: result.image_url,
-              notes: null,
-            });
-          }
-        } else {
-          // Voice capture - transcribe first
-          const formData = new FormData();
-          formData.append('audio', capture.blob, 'recording.webm');
-
-          const transcribeResponse = await fetch('/api/transcribe', {
-            method: 'POST',
-            headers,
-            body: formData,
-          });
-
-          if (!transcribeResponse.ok) throw new Error('Transcription failed');
-
-          const { transcription } = await transcribeResponse.json();
-
+        const data = await response.json();
+        for (const result of data.results || []) {
           await createDiscovery({
-            type: 'note',
-            name: nameFromTranscription(transcription),
-            description: transcription,
-            link: null,
-            metadata: null,
-            image_url: null,
+            type: result.type,
+            name: result.name,
+            description: result.description,
+            link: result.link,
+            metadata: result.metadata,
+            image_url: result.image_url,
             notes: null,
           });
         }
+      } else {
+        // Voice capture - transcribe first
+        const formData = new FormData();
+        formData.append('audio', capture.blob, 'recording.webm');
 
-        await deletePendingCapture(capture.id);
-        syncUntilClean().catch(() => {});
-        return true;
-      } catch (error) {
-        console.error('Sync failed:', error);
-        await updateCaptureStatus(capture.id, 'failed');
-        return false;
+        const transcribeResponse = await fetch('/api/transcribe', {
+          method: 'POST',
+          headers,
+          body: formData,
+        });
+
+        if (!transcribeResponse.ok) throw new Error('Transcription failed');
+
+        const { transcription } = await transcribeResponse.json();
+
+        await createDiscovery({
+          type: 'note',
+          name: nameFromTranscription(transcription),
+          description: transcription,
+          link: null,
+          metadata: null,
+          image_url: null,
+          notes: null,
+        });
       }
-    },
-    []
-  );
+
+      await deletePendingCapture(capture.id);
+      syncUntilClean().catch(() => {});
+      return true;
+    } catch (error) {
+      console.error('Sync failed:', error);
+      await updateCaptureStatus(capture.id, 'failed');
+      return false;
+    }
+  }, []);
 
   const syncOnce = useCallback(async (): Promise<number> => {
     if (!navigator.onLine) return pendingCount;
 
     setIsSyncing(true);
     const captures = await getAllPendingCaptures();
-    const retryable = captures.filter((c) =>
-      c.status === 'pending' || c.status === 'failed' || c.status === 'processing'
+    const retryable = captures.filter(
+      (c) => c.status === 'pending' || c.status === 'failed' || c.status === 'processing',
     );
 
     for (const capture of retryable) {
@@ -201,7 +195,6 @@ export function useOfflineQueue() {
       return;
     }
 
-    syncScheduledRef.current = true;
     let retryDelay = 1_000;
 
     queueDrainPromise = (async () => {
@@ -213,7 +206,6 @@ export function useOfflineQueue() {
         retryDelay = Math.min(retryDelay * 2, MAX_RETRY_DELAY_MS);
       }
     })().finally(async () => {
-      syncScheduledRef.current = false;
       queueDrainPromise = null;
       await loadPending();
     });

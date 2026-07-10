@@ -17,6 +17,7 @@ Consolidate vision processing from Groq to Gemini, merge duplicate settings/conn
 ## Architecture
 
 ### Before
+
 ```
 Image Upload → Groq (extract name) → Gemini (web search) → Supabase
 Voice Note  → Groq Whisper → Supabase
@@ -26,6 +27,7 @@ Voice Note  → Groq Whisper → Supabase
 ```
 
 ### After
+
 ```
 Image Upload → Gemini (analyze + web search in one call) → Supabase
 Voice Note  → Groq Whisper (if key set) OR Gemini → Supabase
@@ -36,22 +38,23 @@ Voice Note  → Groq Whisper (if key set) OR Gemini → Supabase
 
 ## File Changes
 
-| Action | File | Description |
-|--------|------|-------------|
-| Delete | `app/settings/page.tsx` | Merge into connections |
-| Delete | `lib/groq.ts` | Vision removed, whisper moves to transcribe.ts |
-| Create | `lib/transcribe.ts` | Unified transcription with Groq/Gemini fallback |
-| Modify | `lib/gemini.ts` | Add `analyzeImage()` combining vision + search |
-| Modify | `app/api/analyze/route.ts` | Use new Gemini function, pass MIME type |
-| Modify | `app/api/transcribe/route.ts` | Use unified transcription |
-| Modify | `app/connections/page.tsx` | Add "Set as Default" feature |
-| Modify | `hooks/useNotionConnections.ts` | Ensure `setDefault()` is exported |
+| Action | File                            | Description                                     |
+| ------ | ------------------------------- | ----------------------------------------------- |
+| Delete | `app/settings/page.tsx`         | Merge into connections                          |
+| Delete | `lib/groq.ts`                   | Vision removed, whisper moves to transcribe.ts  |
+| Create | `lib/transcribe.ts`             | Unified transcription with Groq/Gemini fallback |
+| Modify | `lib/gemini.ts`                 | Add `analyzeImage()` combining vision + search  |
+| Modify | `app/api/analyze/route.ts`      | Use new Gemini function, pass MIME type         |
+| Modify | `app/api/transcribe/route.ts`   | Use unified transcription                       |
+| Modify | `app/connections/page.tsx`      | Add "Set as Default" feature                    |
+| Modify | `hooks/useNotionConnections.ts` | Ensure `setDefault()` is exported               |
 
 ## API Design
 
 ### `analyzeImage(imageBase64, mimeType, type)`
 
 Single Gemini call that:
+
 1. Analyzes image to identify subject
 2. Uses web search grounding to find details
 3. Returns `{ name, description, link, metadata }`
@@ -69,10 +72,10 @@ Returns `{ text: string }`
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Vision, search, fallback transcription |
-| `GROQ_API_KEY` | No | Fast transcription (optional) |
+| Variable         | Required | Description                            |
+| ---------------- | -------- | -------------------------------------- |
+| `GEMINI_API_KEY` | Yes      | Vision, search, fallback transcription |
+| `GROQ_API_KEY`   | No       | Fast transcription (optional)          |
 
 ## Testing Checklist
 

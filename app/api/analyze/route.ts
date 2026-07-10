@@ -24,8 +24,12 @@ export async function POST(request: NextRequest) {
 
     if (!geminiKey) {
       return NextResponse.json(
-        { error: 'No API key available. Set your Gemini key in Settings or pass via x-gemini-api-key header.', code: 'NO_API_KEY' },
-        { status: 401 }
+        {
+          error:
+            'No API key available. Set your Gemini key in Settings or pass via x-gemini-api-key header.',
+          code: 'NO_API_KEY',
+        },
+        { status: 401 },
       );
     }
 
@@ -33,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (!contentType.includes('multipart/form-data')) {
       return NextResponse.json(
         { error: 'Image upload must use multipart/form-data' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,10 +47,7 @@ export async function POST(request: NextRequest) {
     const hint = formData.get('hint') as string | null;
 
     if (images.length === 0) {
-      return NextResponse.json(
-        { error: 'No images provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No images provided' }, { status: 400 });
     }
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
       if (image.size > MAX_FILE_SIZE) {
         return NextResponse.json(
           { error: `Image ${image.name} exceeds 10MB limit` },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -94,11 +95,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       {
-        error: isDevelopment
-          ? `Failed to analyze images: ${message}`
-          : 'Failed to analyze images',
+        error: isDevelopment ? `Failed to analyze images: ${message}` : 'Failed to analyze images',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

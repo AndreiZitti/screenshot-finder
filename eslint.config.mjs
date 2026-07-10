@@ -1,14 +1,4 @@
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { FlatCompat } from '@eslint/eslintrc';
-import js from '@eslint/js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-});
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 
 const config = [
   {
@@ -20,7 +10,15 @@ const config = [
       'public/workbox-*.js',
     ],
   },
-  ...compat.extends('next/core-web-vitals'),
+  ...nextCoreWebVitals,
+  {
+    rules: {
+      // Local-first hydration and media lifecycles intentionally update state from effects.
+      'react-hooks/set-state-in-effect': 'off',
+      // The particle animation schedules its stable callback recursively with requestAnimationFrame.
+      'react-hooks/immutability': 'off',
+    },
+  },
 ];
 
 export default config;

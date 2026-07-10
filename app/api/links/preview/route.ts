@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClientFromRequest } from '@/lib/supabase/api-client';
+import { isAccessControlEnforced } from '@/lib/auth/access-control';
 import { LinkPlatform } from '@/types/link';
 
 function detectPlatform(url: string): LinkPlatform {
@@ -32,7 +33,7 @@ function extractOgTag(html: string, property: string): string | null {
 export async function POST(request: NextRequest) {
   try {
     const { user } = await createClientFromRequest(request);
-    if (!user) {
+    if (!user && isAccessControlEnforced()) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -40,26 +41,20 @@ export async function POST(request: NextRequest) {
     const { url } = body;
 
     if (!url) {
-      return NextResponse.json(
-        { error: 'URL is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
 
     let parsedUrl: URL;
     try {
       parsedUrl = new URL(url);
     } catch {
-      return NextResponse.json(
-        { error: 'Invalid URL' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
     }
 
     if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
       return NextResponse.json(
         { error: 'Only HTTP and HTTPS URLs are supported' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -91,9 +86,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ name, thumbnail, platform });
   } catch (error) {
     console.error('Preview error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch preview' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch preview' }, { status: 500 });
   }
 }

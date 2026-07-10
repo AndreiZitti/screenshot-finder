@@ -20,14 +20,13 @@ export async function GET(request: NextRequest) {
     if (kind === undefined) {
       return NextResponse.json(
         { error: 'Invalid kind. Use all, discoveries, links, notes, discovery, link, or note.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const archivedParam = searchParams.get('archived');
-    const archived = archivedParam === 'include' || archivedParam === 'only'
-      ? archivedParam
-      : 'active';
+    const archived =
+      archivedParam === 'include' || archivedParam === 'only' ? archivedParam : 'active';
 
     const limit = parseBoundedInt(searchParams.get('limit'), 100, 1, 500);
     const offset = parseBoundedInt(searchParams.get('offset'), 0, 0, 100000);
@@ -54,9 +53,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Control stash list error:', error);
-    return NextResponse.json(
-      { error: 'Failed to list stash items' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to list stash items' }, { status: 500 });
   }
 }

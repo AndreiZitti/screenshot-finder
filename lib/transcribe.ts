@@ -1,6 +1,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-async function transcribeWithGemini(audioBuffer: Buffer, mimeType: string, geminiApiKey?: string): Promise<string> {
+async function transcribeWithGemini(
+  audioBuffer: Buffer,
+  mimeType: string,
+  geminiApiKey?: string,
+): Promise<string> {
   const key = geminiApiKey || process.env.GEMINI_API_KEY;
   const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   if (!key) {
@@ -28,7 +32,7 @@ async function transcribeWithGemini(audioBuffer: Buffer, mimeType: string, gemin
 export async function transcribe(
   audioBuffer: Buffer,
   mimeType: string,
-  options?: { geminiApiKey?: string }
+  options?: { geminiApiKey?: string },
 ): Promise<string> {
   return await transcribeWithGemini(audioBuffer, mimeType, options?.geminiApiKey);
 }

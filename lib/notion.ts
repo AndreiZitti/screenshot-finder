@@ -17,7 +17,9 @@ export function extractPageId(pageUrlOrId: string): string {
     return match[1].replace(/-/g, '');
   }
   // Try to extract from URL with dashes
-  const urlMatch = pageUrlOrId.match(/([a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12})/i);
+  const urlMatch = pageUrlOrId.match(
+    /([a-f0-9]{8}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{4}-?[a-f0-9]{12})/i,
+  );
   if (urlMatch) {
     return urlMatch[1].replace(/-/g, '');
   }
@@ -35,7 +37,9 @@ export interface SendToNotionParams {
   tags?: string[];
 }
 
-export async function sendToNotion(params: SendToNotionParams): Promise<{ success: boolean; error?: string }> {
+export async function sendToNotion(
+  params: SendToNotionParams,
+): Promise<{ success: boolean; error?: string }> {
   const { credentials, type, name, description, transcription, link, platform, tags } = params;
 
   const client = createNotionClient(credentials.apiKey);
@@ -93,10 +97,12 @@ export async function sendToNotion(params: SendToNotionParams): Promise<{ succes
   }
 }
 
-export async function testNotionConnection(credentials: NotionCredentials): Promise<{ success: boolean; pageName?: string; error?: string }> {
+export async function testNotionConnection(
+  credentials: NotionCredentials,
+): Promise<{ success: boolean; pageName?: string; error?: string }> {
   const client = createNotionClient(credentials.apiKey);
   const pageId = extractPageId(credentials.pageId);
-  
+
   try {
     const page = await client.pages.retrieve({ page_id: pageId });
     // Extract page title

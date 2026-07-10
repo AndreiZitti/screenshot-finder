@@ -19,9 +19,7 @@ export default function Header() {
               <Link
                 href="/"
                 className={`text-sm font-medium transition-colors ${
-                  pathname === '/'
-                    ? 'text-gray-900'
-                    : 'text-gray-500 hover:text-gray-900'
+                  pathname === '/' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 Capture
@@ -39,9 +37,7 @@ export default function Header() {
               <Link
                 href="/settings"
                 className={`text-sm font-medium transition-colors ${
-                  pathname === '/settings'
-                    ? 'text-gray-900'
-                    : 'text-gray-500 hover:text-gray-900'
+                  pathname === '/settings' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 Settings

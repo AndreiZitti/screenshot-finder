@@ -21,6 +21,7 @@ Improve z-stash for mobile use and add PWA capabilities for offline capture. The
 ### Problem
 
 Current layout assumes desktop width. On mobile:
+
 - Header nav items crowd together
 - Drop zone is too large, pushes content off screen
 - Cards don't stack well
@@ -31,16 +32,19 @@ Current layout assumes desktop width. On mobile:
 **Header** — Collapse to bottom navigation bar on mobile (more thumb-friendly).
 
 **Capture page**:
+
 - Smaller drop zone (less padding, shorter height)
 - Voice recorder button more prominent
 - Category selector becomes full-width dropdown
 
 **Cards (Discovery/Note)**:
+
 - Full-width single column on mobile
 - Larger action buttons (44px minimum tap target)
 - Metadata collapses into expandable section
 
 **Filter tabs** (Library page):
+
 - Horizontally scrollable pill bar instead of wrapping
 
 ### Breakpoint Strategy
@@ -77,6 +81,7 @@ File: `public/manifest.json`
 ### Service Worker
 
 Using `next-pwa` or Serwist:
+
 - Cache static assets (JS, CSS, fonts)
 - Cache API responses with network-first strategy
 - Precache main pages (/, /library, /notes, /archive)
@@ -100,8 +105,8 @@ interface PendingCapture {
   id: string;
   type: 'image' | 'voice';
   blob: Blob;
-  selectedType?: DiscoveryType;  // For images
-  transcription?: string;        // For voice (null until synced)
+  selectedType?: DiscoveryType; // For images
+  transcription?: string; // For voice (null until synced)
   createdAt: string;
   status: 'pending' | 'processing' | 'failed';
 }
@@ -167,12 +172,12 @@ Voice transcription requires network (Whisper API). Offline voice notes save the
 
 ## Tech Choices
 
-| Component | Technology |
-|-----------|------------|
-| PWA | next-pwa or Serwist |
-| Offline Storage | IndexedDB (idb-keyval) |
-| Responsive | Tailwind breakpoints |
-| Icons | Generated from SVG source |
+| Component       | Technology                |
+| --------------- | ------------------------- |
+| PWA             | next-pwa or Serwist       |
+| Offline Storage | IndexedDB (idb-keyval)    |
+| Responsive      | Tailwind breakpoints      |
+| Icons           | Generated from SVG source |
 
 ## Open Questions
 

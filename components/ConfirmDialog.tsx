@@ -20,7 +20,10 @@ export default function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onCancel}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onCancel}
+    >
       <div
         className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl animate-toast-in"
         onClick={(e) => e.stopPropagation()}

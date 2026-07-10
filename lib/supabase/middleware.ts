@@ -1,15 +1,10 @@
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
-import { isAccessControlEnforced, isAllowedUser } from "@/lib/auth/access-control";
-
-const cookieOptions = {
-  path: '/',
-  domain: '.zitti.ro',
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production'
-};
+import { createServerClient } from '@supabase/ssr';
+import { NextResponse, type NextRequest } from 'next/server';
+import { isAccessControlEnforced, isAllowedUser } from '@/lib/auth/access-control';
+import { getAuthCookieOptions } from '@/lib/supabase/cookie-options';
 
 export async function updateSession(request: NextRequest) {
+  const cookieOptions = getAuthCookieOptions();
   // Bearer token requests bypass cookie session logic entirely
   if (request.nextUrl.pathname.startsWith('/api/') && request.headers.has('authorization')) {
     return NextResponse.next({ request });
@@ -29,18 +24,16 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, { ...options, ...cookieOptions })
+            supabaseResponse.cookies.set(name, value, { ...options, ...cookieOptions }),
           );
         },
       },
-    }
+    },
   );
 
   // Refresh session if expired - this also validates the session
@@ -52,17 +45,18 @@ export async function updateSession(request: NextRequest) {
   // Stale auth cookies: getUser() failed but auth cookies exist
   // Clear them and redirect to login so the user can sign in fresh
   if (error && !user) {
-    const hasAuthCookies = request.cookies.getAll().some(c => c.name.includes('auth-token'));
+    const hasAuthCookies = request.cookies.getAll().some((c) => c.name.includes('auth-token'));
     if (hasAuthCookies) {
       const url = request.nextUrl.clone();
       url.pathname = '/login';
-      const response = request.nextUrl.pathname === '/login'
-        ? NextResponse.next({ request })
-        : NextResponse.redirect(url);
+      const response =
+        request.nextUrl.pathname === '/login'
+          ? NextResponse.next({ request })
+          : NextResponse.redirect(url);
       // Delete all Supabase auth cookies
-      request.cookies.getAll().forEach(cookie => {
+      request.cookies.getAll().forEach((cookie) => {
         if (cookie.name.includes('auth-token')) {
-          response.cookies.delete(cookie.name);
+          response.cookies.set(cookie.name, '', { ...cookieOptions, maxAge: 0 });
         }
       });
       return response;
@@ -85,13 +79,11 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/login';
     url.searchParams.set('error', 'not_allowed');
 
-    const response = isLogin
-      ? supabaseResponse
-      : NextResponse.redirect(url);
+    const response = isLogin ? supabaseResponse : NextResponse.redirect(url);
 
-    request.cookies.getAll().forEach(cookie => {
+    request.cookies.getAll().forEach((cookie) => {
       if (cookie.name.includes('auth-token')) {
-        response.cookies.delete(cookie.name);
+        response.cookies.set(cookie.name, '', { ...cookieOptions, maxAge: 0 });
       }
     });
 
@@ -101,7 +93,7 @@ export async function updateSession(request: NextRequest) {
   // Redirect logged-in users away from login page
   if (isLogin && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = '/';
     return NextResponse.redirect(url);
   }
 

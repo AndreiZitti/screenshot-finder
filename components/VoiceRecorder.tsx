@@ -11,7 +11,8 @@ interface VoiceRecorderProps {
 }
 
 export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecorderProps) {
-  const { state, audioBlob, duration, error, startRecording, stopRecording, reset } = useVoiceRecorder();
+  const { state, audioBlob, duration, error, startRecording, stopRecording, reset } =
+    useVoiceRecorder();
   const { showToast } = useToast();
   const { geminiApiKey } = useApiKeys();
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -46,9 +47,11 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
     try {
       const formData = new FormData();
       // Determine file extension from MIME type
-      const ext = audioBlob.type.includes('mp4') ? 'mp4' 
-        : audioBlob.type.includes('wav') ? 'wav' 
-        : 'webm';
+      const ext = audioBlob.type.includes('mp4')
+        ? 'mp4'
+        : audioBlob.type.includes('wav')
+          ? 'wav'
+          : 'webm';
       formData.append('audio', audioBlob, `recording.${ext}`);
 
       const response = await fetch('/api/transcribe', {
@@ -88,9 +91,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
 
   return (
     <div className="flex flex-col items-center gap-3">
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {/* Idle state - show record button */}
       {state === 'idle' && !isTranscribing && (
@@ -122,9 +123,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
         <div className="flex flex-col items-center gap-3">
           <div className="flex items-center gap-3">
             <div className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
-            <span className="font-mono text-lg text-gray-900">
-              {formatDuration(duration)}
-            </span>
+            <span className="font-mono text-lg text-gray-900">{formatDuration(duration)}</span>
           </div>
           <button
             onClick={handleStopAndPreview}
@@ -160,12 +159,7 @@ export default function VoiceRecorder({ onTranscription, disabled }: VoiceRecord
         <div className="flex flex-col items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 w-full sm:w-auto">
           <p className="text-sm font-medium text-gray-700">Preview your recording:</p>
 
-          <audio
-            ref={audioRef}
-            src={audioUrl}
-            controls
-            className="w-full max-w-xs"
-          />
+          <audio ref={audioRef} src={audioUrl} controls className="w-full max-w-xs" />
 
           <div className="flex gap-2">
             <button

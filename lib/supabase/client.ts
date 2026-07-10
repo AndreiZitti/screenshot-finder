@@ -1,4 +1,5 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createBrowserClient } from '@supabase/ssr';
+import { getAuthCookieOptions } from '@/lib/supabase/cookie-options';
 
 export function createClient() {
   return createBrowserClient(
@@ -6,14 +7,7 @@ export function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       db: { schema: 'stash' },
-      cookieOptions: {
-        // The auth cookie is set with domain .zitti.ro (shared across subdomains).
-        // Without specifying the domain here, cookie deletion targets only the
-        // current hostname (stash.zitti.ro) and silently fails, causing stale
-        // tokens to persist and trigger infinite refresh loops.
-        domain: '.zitti.ro',
-        secure: process.env.NODE_ENV === 'production',
-      },
-    }
+      cookieOptions: getAuthCookieOptions(),
+    },
   );
 }

@@ -10,14 +10,16 @@ export default function GlobalError({
   return (
     <html>
       <body>
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '1rem',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}>
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+          }}
+        >
           <div style={{ textAlign: 'center', maxWidth: '400px' }}>
             <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>!</div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>

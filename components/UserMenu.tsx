@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { useAuth } from "@/lib/auth/auth-context";
+import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export default function UserMenu() {
   const { user, isGuest } = useAuth();
@@ -16,22 +16,19 @@ export default function UserMenu() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setDropdownOpen(false);
-    router.push("/login");
+    router.push('/login');
     router.refresh();
   };
 
@@ -48,16 +45,15 @@ export default function UserMenu() {
   }
 
   // Logged in state
-  const initials = user.email
-    ? user.email.substring(0, 2).toUpperCase()
-    : "??";
+  const initials = user.email ? user.email.substring(0, 2).toUpperCase() : '??';
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setDropdownOpen(!dropdownOpen)}
-        className="w-8 h-8 bg-gray-900 hover:bg-gray-800 rounded-full flex items-center justify-center text-white text-xs font-semibold transition-colors"
-        title={user.email || "User menu"}
+        className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-900 text-xs font-semibold text-white transition-colors hover:bg-gray-800 sm:h-9 sm:w-9"
+        aria-label="Open user menu"
+        title={user.email || 'User menu'}
       >
         {initials}
       </button>
@@ -66,14 +62,12 @@ export default function UserMenu() {
         <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
           {/* User info */}
           <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user.email}
-            </p>
+            <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
           </div>
 
           {/* Connections */}
           <Link
-            href="/connections"
+            href="/settings"
             onClick={() => setDropdownOpen(false)}
             className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
           >

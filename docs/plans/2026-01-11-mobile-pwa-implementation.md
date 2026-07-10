@@ -15,6 +15,7 @@
 ### Task 1: Create BottomNav Component
 
 **Files:**
+
 - Create: `components/BottomNav.tsx`
 
 **Step 1: Create the component**
@@ -34,23 +35,62 @@ const NAV_ITEMS = [
 
 const Icons = {
   capture: (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
     </svg>
   ),
   library: (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+      />
     </svg>
   ),
   notes: (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+      />
     </svg>
   ),
   archive: (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-6 w-6"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+      />
     </svg>
   ),
 };
@@ -62,18 +102,14 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white sm:hidden">
       <div className="flex justify-around">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === '/' 
-            ? pathname === '/' 
-            : pathname.startsWith(item.href);
-          
+          const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-                isActive
-                  ? 'text-gray-900'
-                  : 'text-gray-500'
+                isActive ? 'text-gray-900' : 'text-gray-500'
               }`}
             >
               {Icons[item.icon as keyof typeof Icons]}
@@ -104,11 +140,13 @@ git commit -m "feat: add BottomNav component for mobile"
 ### Task 2: Update Layout to Include BottomNav
 
 **Files:**
+
 - Modify: `app/layout.tsx`
 
 **Step 1: Import and add BottomNav**
 
 Add import at top:
+
 ```tsx
 import BottomNav from '@/components/BottomNav';
 ```
@@ -116,13 +154,13 @@ import BottomNav from '@/components/BottomNav';
 Add BottomNav after `{children}` and add bottom padding to main content:
 
 Change:
+
 ```tsx
-<main className="mx-auto max-w-5xl px-4 py-8">
-  {children}
-</main>
+<main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
 ```
 
 To:
+
 ```tsx
 <main className="mx-auto max-w-5xl px-4 py-8 pb-24 sm:pb-8">
   {children}
@@ -147,11 +185,13 @@ git commit -m "feat: integrate BottomNav in layout with bottom padding"
 ### Task 3: Make Header Hide Nav Links on Mobile
 
 **Files:**
+
 - Modify: `components/Header.tsx`
 
 **Step 1: Hide nav links on mobile, keep logo and user menu**
 
 Change the nav links container from:
+
 ```tsx
 <div className="flex items-center gap-6">
   <Link
@@ -159,6 +199,7 @@ Change the nav links container from:
 ```
 
 To:
+
 ```tsx
 <div className="hidden items-center gap-6 sm:flex">
   <Link
@@ -167,6 +208,7 @@ To:
 
 Also update the outer flex container to keep UserMenu visible:
 Change:
+
 ```tsx
 <div className="flex items-center gap-6">
 ```
@@ -179,9 +221,7 @@ To add a wrapper that separates nav links from UserMenu. Replace the entire `<di
     <Link
       href="/"
       className={`text-sm font-medium transition-colors ${
-        pathname === '/'
-          ? 'text-gray-900'
-          : 'text-gray-500 hover:text-gray-900'
+        pathname === '/' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-900'
       }`}
     >
       Capture
@@ -238,16 +278,19 @@ git commit -m "feat: hide header nav links on mobile, keep UserMenu"
 ### Task 4: Make CaptureZone Responsive
 
 **Files:**
+
 - Modify: `components/CaptureZone.tsx`
 
 **Step 1: Reduce drop zone padding on mobile**
 
 Find the drop zone div:
+
 ```tsx
 className={`relative rounded-lg border-2 border-dashed p-12 text-center transition-colors ${
 ```
 
 Change to:
+
 ```tsx
 className={`relative rounded-lg border-2 border-dashed p-6 sm:p-12 text-center transition-colors ${
 ```
@@ -255,6 +298,7 @@ className={`relative rounded-lg border-2 border-dashed p-6 sm:p-12 text-center t
 **Step 2: Make results grid single column on mobile**
 
 Find:
+
 ```tsx
 <div className="grid gap-4 sm:grid-cols-2">
 ```
@@ -264,6 +308,7 @@ This is already correct (single column on mobile).
 **Step 3: Make image preview thumbnails smaller on mobile**
 
 Find:
+
 ```tsx
 <img
   src={URL.createObjectURL(file)}
@@ -273,6 +318,7 @@ Find:
 ```
 
 Change to:
+
 ```tsx
 <img
   src={URL.createObjectURL(file)}
@@ -284,18 +330,24 @@ Change to:
 **Step 4: Make action buttons larger on mobile**
 
 Find the Analyze button:
+
 ```tsx
-className="rounded-lg bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+className =
+  'rounded-lg bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50';
 ```
 
 Change to:
+
 ```tsx
-className="rounded-lg bg-gray-900 px-6 py-3 sm:py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+className =
+  'rounded-lg bg-gray-900 px-6 py-3 sm:py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50';
 ```
 
 Do the same for Cancel button:
+
 ```tsx
-className="rounded-lg px-6 py-3 sm:py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+className =
+  'rounded-lg px-6 py-3 sm:py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50';
 ```
 
 **Step 5: Verify build passes**
@@ -315,40 +367,51 @@ git commit -m "feat: make CaptureZone responsive with smaller drop zone on mobil
 ### Task 5: Make VoiceRecorder Buttons Larger on Mobile
 
 **Files:**
+
 - Modify: `components/VoiceRecorder.tsx`
 
 **Step 1: Increase tap target for record button**
 
 Find:
+
 ```tsx
-className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+className =
+  'flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50';
 ```
 
 Change to:
+
 ```tsx
-className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-4 sm:py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
+className =
+  'flex items-center gap-2 rounded-full bg-gray-900 px-6 py-4 sm:py-3 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50';
 ```
 
 **Step 2: Same for stop recording button**
 
 Find:
+
 ```tsx
-className="flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700"
+className =
+  'flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-red-700';
 ```
 
 Change to:
+
 ```tsx
-className="flex items-center gap-2 rounded-full bg-red-600 px-6 py-4 sm:py-3 text-sm font-medium text-white transition-colors hover:bg-red-700"
+className =
+  'flex items-center gap-2 rounded-full bg-red-600 px-6 py-4 sm:py-3 text-sm font-medium text-white transition-colors hover:bg-red-700';
 ```
 
 **Step 3: Make preview container full width on mobile**
 
 Find:
+
 ```tsx
 <div className="flex flex-col items-center gap-4 rounded-lg border border-gray-200 bg-white p-4">
 ```
 
 Change to:
+
 ```tsx
 <div className="flex w-full flex-col items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 sm:w-auto">
 ```
@@ -370,16 +433,19 @@ git commit -m "feat: increase VoiceRecorder button tap targets on mobile"
 ### Task 6: Make TranscriptionPreview Full Width on Mobile
 
 **Files:**
+
 - Modify: `components/TranscriptionPreview.tsx`
 
 **Step 1: Make container responsive**
 
 Find:
+
 ```tsx
 <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
 ```
 
 Change to:
+
 ```tsx
 <div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-4 sm:p-5 shadow-sm">
 ```
@@ -387,30 +453,40 @@ Change to:
 **Step 2: Make buttons larger on mobile**
 
 Find the "Save as Note" button:
+
 ```tsx
-className="flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+className =
+  'flex-1 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200';
 ```
 
 Change to:
+
 ```tsx
-className="flex-1 rounded-lg bg-gray-100 px-4 py-3 sm:py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+className =
+  'flex-1 rounded-lg bg-gray-100 px-4 py-3 sm:py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200';
 ```
 
 Same for "Research This":
+
 ```tsx
-className="flex-1 rounded-lg bg-gray-900 px-4 py-3 sm:py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
+className =
+  'flex-1 rounded-lg bg-gray-900 px-4 py-3 sm:py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800';
 ```
 
 **Step 3: Make category buttons larger**
 
 Find:
+
 ```tsx
-className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+className =
+  'flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50';
 ```
 
 Change to:
+
 ```tsx
-className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-3 sm:py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+className =
+  'flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-3 sm:py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50';
 ```
 
 **Step 4: Verify build passes**
@@ -430,23 +506,30 @@ git commit -m "feat: make TranscriptionPreview responsive with larger buttons"
 ### Task 7: Make DiscoveryCard Responsive
 
 **Files:**
+
 - Modify: `components/DiscoveryCard.tsx`
 
 **Step 1: Make action buttons larger on mobile**
 
 Find the archive button:
+
 ```tsx
-className="shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+className =
+  'shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50';
 ```
 
 Change to:
+
 ```tsx
-className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+className =
+  'shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50';
 ```
 
 Same for delete button:
+
 ```tsx
-className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+className =
+  'shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50';
 ```
 
 **Step 2: Verify build passes**
@@ -466,23 +549,29 @@ git commit -m "feat: increase DiscoveryCard action button tap targets"
 ### Task 8: Make NoteCard Responsive
 
 **Files:**
+
 - Modify: `components/NoteCard.tsx`
 
 **Step 1: Make action buttons larger on mobile**
 
 Find archive button:
+
 ```tsx
-className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+className = 'rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50';
 ```
 
 Change to:
+
 ```tsx
-className="rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+className =
+  'rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50';
 ```
 
 Same for delete button:
+
 ```tsx
-className="rounded p-2 sm:p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+className =
+  'rounded p-2 sm:p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50';
 ```
 
 **Step 2: Verify build passes**
@@ -502,16 +591,19 @@ git commit -m "feat: increase NoteCard action button tap targets"
 ### Task 9: Make Library Filter Tabs Scrollable on Mobile
 
 **Files:**
+
 - Modify: `app/library/page.tsx`
 
 **Step 1: Make filter container horizontally scrollable**
 
 Find:
+
 ```tsx
 <div className="flex flex-wrap justify-center gap-2">
 ```
 
 Change to:
+
 ```tsx
 <div className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:justify-center sm:overflow-x-visible sm:pb-0">
 ```
@@ -519,6 +611,7 @@ Change to:
 **Step 2: Prevent buttons from shrinking**
 
 Find each filter button class and add `shrink-0`:
+
 ```tsx
 className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
 ```
@@ -542,16 +635,19 @@ git commit -m "feat: make library filter tabs horizontally scrollable on mobile"
 ### Task 10: Make Archive Tabs Scrollable on Mobile
 
 **Files:**
+
 - Modify: `app/archive/page.tsx`
 
 **Step 1: Make tab container scrollable on mobile**
 
 Find:
+
 ```tsx
 <div className="flex justify-center gap-2">
 ```
 
 Change to:
+
 ```tsx
 <div className="flex gap-2 overflow-x-auto pb-2 sm:justify-center sm:overflow-x-visible sm:pb-0">
 ```
@@ -559,11 +655,13 @@ Change to:
 **Step 2: Add shrink-0 to buttons**
 
 Find:
+
 ```tsx
 className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
 ```
 
 Change to:
+
 ```tsx
 className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
 ```
@@ -587,6 +685,7 @@ git commit -m "feat: make archive tabs scrollable on mobile"
 ## Phase 1 Complete Checkpoint
 
 At this point, test on a mobile device or Chrome DevTools mobile view:
+
 - Bottom nav appears and works
 - Header shows only logo and user menu
 - Drop zone is smaller, buttons are tappable
@@ -600,6 +699,7 @@ At this point, test on a mobile device or Chrome DevTools mobile view:
 ### Task 11: Create PWA Icons
 
 **Files:**
+
 - Create: `public/icons/icon-192.png`
 - Create: `public/icons/icon-512.png`
 
@@ -612,6 +712,7 @@ mkdir -p public/icons
 **Step 2: Create a simple SVG icon and convert**
 
 Create `public/icons/icon.svg`:
+
 ```svg
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="64" fill="#111827"/>
@@ -622,6 +723,7 @@ Create `public/icons/icon.svg`:
 **Step 3: Generate PNGs using an online tool or ImageMagick**
 
 If ImageMagick is available:
+
 ```bash
 convert -background none -size 192x192 public/icons/icon.svg public/icons/icon-192.png
 convert -background none -size 512x512 public/icons/icon.svg public/icons/icon-512.png
@@ -641,6 +743,7 @@ git commit -m "feat: add PWA icons"
 ### Task 12: Create Web App Manifest
 
 **Files:**
+
 - Create: `public/manifest.json`
 
 **Step 1: Create manifest file**
@@ -684,11 +787,13 @@ git commit -m "feat: add web app manifest"
 ### Task 13: Add PWA Meta Tags to Layout
 
 **Files:**
+
 - Modify: `app/layout.tsx`
 
 **Step 1: Update metadata export**
 
 Find the metadata export and update it:
+
 ```tsx
 export const metadata: Metadata = {
   title: 'z-stash',
@@ -709,6 +814,7 @@ export const metadata: Metadata = {
 **Step 2: Add viewport export for PWA**
 
 Add after metadata:
+
 ```tsx
 export const viewport: Viewport = {
   width: 'device-width',
@@ -722,6 +828,7 @@ export const viewport: Viewport = {
 **Step 3: Import Viewport type**
 
 Add to imports:
+
 ```tsx
 import type { Metadata, Viewport } from 'next';
 ```
@@ -729,6 +836,7 @@ import type { Metadata, Viewport } from 'next';
 **Step 4: Add apple-touch-icon link in head**
 
 In the html head section, add:
+
 ```tsx
 <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 ```
@@ -750,6 +858,7 @@ git commit -m "feat: add PWA meta tags and manifest link"
 ### Task 14: Install and Configure next-pwa
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `next.config.js`
 
@@ -778,6 +887,7 @@ module.exports = withPWA(nextConfig);
 **Step 3: Add generated files to .gitignore**
 
 Add to `.gitignore`:
+
 ```
 # PWA
 public/sw.js
@@ -804,6 +914,7 @@ git commit -m "feat: configure next-pwa for service worker generation"
 ## Phase 2 Complete Checkpoint
 
 Test PWA functionality:
+
 - Open Chrome DevTools > Application > Manifest - should show app info
 - Application > Service Workers - should show registered worker
 - On mobile Chrome, "Add to Home Screen" option should appear
@@ -816,6 +927,7 @@ Test PWA functionality:
 ### Task 15: Install idb-keyval for IndexedDB
 
 **Files:**
+
 - Modify: `package.json`
 
 **Step 1: Install idb-keyval**
@@ -836,6 +948,7 @@ git commit -m "chore: install idb-keyval for offline storage"
 ### Task 16: Create Offline Storage Module
 
 **Files:**
+
 - Create: `lib/offlineStorage.ts`
 
 **Step 1: Create the storage module**
@@ -869,7 +982,7 @@ export async function deletePendingCapture(id: string): Promise<void> {
 export async function getAllPendingCaptures(): Promise<PendingCapture[]> {
   const allKeys = await keys();
   const pendingKeys = allKeys.filter(
-    (key) => typeof key === 'string' && key.startsWith(STORAGE_KEY_PREFIX)
+    (key) => typeof key === 'string' && key.startsWith(STORAGE_KEY_PREFIX),
   );
 
   const captures: PendingCapture[] = [];
@@ -880,14 +993,12 @@ export async function getAllPendingCaptures(): Promise<PendingCapture[]> {
     }
   }
 
-  return captures.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  return captures.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function updateCaptureStatus(
   id: string,
-  status: PendingCapture['status']
+  status: PendingCapture['status'],
 ): Promise<void> {
   const capture = await getPendingCapture(id);
   if (capture) {
@@ -898,9 +1009,8 @@ export async function updateCaptureStatus(
 
 export async function getPendingCount(): Promise<number> {
   const allKeys = await keys();
-  return allKeys.filter(
-    (key) => typeof key === 'string' && key.startsWith(STORAGE_KEY_PREFIX)
-  ).length;
+  return allKeys.filter((key) => typeof key === 'string' && key.startsWith(STORAGE_KEY_PREFIX))
+    .length;
 }
 ```
 
@@ -921,6 +1031,7 @@ git commit -m "feat: add offline storage module for pending captures"
 ### Task 17: Create useOfflineQueue Hook
 
 **Files:**
+
 - Create: `hooks/useOfflineQueue.ts`
 
 **Step 1: Create the hook**
@@ -987,7 +1098,7 @@ export function useOfflineQueue() {
       await loadPending();
       return capture.id;
     },
-    [loadPending]
+    [loadPending],
   );
 
   // Remove a pending capture
@@ -996,7 +1107,7 @@ export function useOfflineQueue() {
       await deletePendingCapture(id);
       await loadPending();
     },
-    [loadPending]
+    [loadPending],
   );
 
   // Retry a failed capture
@@ -1005,60 +1116,57 @@ export function useOfflineQueue() {
       await updateCaptureStatus(id, 'pending');
       await loadPending();
     },
-    [loadPending]
+    [loadPending],
   );
 
   // Sync a single capture
-  const syncCapture = useCallback(
-    async (capture: PendingCapture): Promise<boolean> => {
-      try {
-        await updateCaptureStatus(capture.id, 'processing');
+  const syncCapture = useCallback(async (capture: PendingCapture): Promise<boolean> => {
+    try {
+      await updateCaptureStatus(capture.id, 'processing');
 
-        if (capture.type === 'image') {
-          const formData = new FormData();
-          formData.append('images', capture.blob, 'offline-capture.jpg');
-          formData.append('type', capture.selectedType || 'other');
+      if (capture.type === 'image') {
+        const formData = new FormData();
+        formData.append('images', capture.blob, 'offline-capture.jpg');
+        formData.append('type', capture.selectedType || 'other');
 
-          const response = await fetch('/api/analyze', {
-            method: 'POST',
-            body: formData,
-          });
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: formData,
+        });
 
-          if (!response.ok) throw new Error('Analysis failed');
-        } else {
-          // Voice capture - transcribe first
-          const formData = new FormData();
-          formData.append('audio', capture.blob, 'recording.webm');
+        if (!response.ok) throw new Error('Analysis failed');
+      } else {
+        // Voice capture - transcribe first
+        const formData = new FormData();
+        formData.append('audio', capture.blob, 'recording.webm');
 
-          const transcribeResponse = await fetch('/api/transcribe', {
-            method: 'POST',
-            body: formData,
-          });
+        const transcribeResponse = await fetch('/api/transcribe', {
+          method: 'POST',
+          body: formData,
+        });
 
-          if (!transcribeResponse.ok) throw new Error('Transcription failed');
+        if (!transcribeResponse.ok) throw new Error('Transcription failed');
 
-          const { transcription } = await transcribeResponse.json();
+        const { transcription } = await transcribeResponse.json();
 
-          // Save as note
-          const noteResponse = await fetch('/api/notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ transcription }),
-          });
+        // Save as note
+        const noteResponse = await fetch('/api/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcription }),
+        });
 
-          if (!noteResponse.ok) throw new Error('Failed to save note');
-        }
-
-        await deletePendingCapture(capture.id);
-        return true;
-      } catch (error) {
-        console.error('Sync failed:', error);
-        await updateCaptureStatus(capture.id, 'failed');
-        return false;
+        if (!noteResponse.ok) throw new Error('Failed to save note');
       }
-    },
-    []
-  );
+
+      await deletePendingCapture(capture.id);
+      return true;
+    } catch (error) {
+      console.error('Sync failed:', error);
+      await updateCaptureStatus(capture.id, 'failed');
+      return false;
+    }
+  }, []);
 
   // Sync all pending captures
   const syncAll = useCallback(async () => {
@@ -1114,6 +1222,7 @@ git commit -m "feat: add useOfflineQueue hook for offline capture management"
 ### Task 18: Create PendingCaptures Component
 
 **Files:**
+
 - Create: `components/PendingCaptures.tsx`
 
 **Step 1: Create the component**
@@ -1141,9 +1250,7 @@ export default function PendingCaptures({
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-medium text-amber-900">
-          Pending ({captures.length})
-        </h3>
+        <h3 className="font-medium text-amber-900">Pending ({captures.length})</h3>
         {isSyncing && (
           <span className="flex items-center gap-2 text-sm text-amber-700">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-700" />
@@ -1238,11 +1345,13 @@ git commit -m "feat: add PendingCaptures component to display offline queue"
 ### Task 19: Integrate Offline Queue into CaptureZone
 
 **Files:**
+
 - Modify: `components/CaptureZone.tsx`
 
 **Step 1: Import hook and component**
 
 Add imports:
+
 ```tsx
 import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 import PendingCaptures from './PendingCaptures';
@@ -1251,6 +1360,7 @@ import PendingCaptures from './PendingCaptures';
 **Step 2: Add hook usage at top of component**
 
 After existing useState calls:
+
 ```tsx
 const {
   isOnline,
@@ -1265,6 +1375,7 @@ const {
 **Step 3: Modify analyzeImages to handle offline**
 
 Replace the analyzeImages function:
+
 ```tsx
 const analyzeImages = async () => {
   // If offline, save to queue
@@ -1312,25 +1423,31 @@ const analyzeImages = async () => {
 **Step 4: Add PendingCaptures to render**
 
 Add before the Results section:
+
 ```tsx
-{/* Pending Captures */}
+{
+  /* Pending Captures */
+}
 <PendingCaptures
   captures={pendingCaptures}
   isSyncing={isSyncing}
   onRetry={retryCapture}
   onDelete={removePendingCapture}
-/>
+/>;
 ```
 
 **Step 5: Add offline indicator**
 
 Add at top of the component's return, inside the outer div:
+
 ```tsx
-{!isOnline && (
-  <div className="rounded-lg bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">
-    You're offline. Captures will sync when connected.
-  </div>
-)}
+{
+  !isOnline && (
+    <div className="rounded-lg bg-amber-100 px-4 py-2 text-center text-sm text-amber-800">
+      You're offline. Captures will sync when connected.
+    </div>
+  );
+}
 ```
 
 **Step 6: Verify build passes**
@@ -1350,6 +1467,7 @@ git commit -m "feat: integrate offline queue into CaptureZone"
 ### Task 20: Add Pending Badge to BottomNav
 
 **Files:**
+
 - Modify: `components/BottomNav.tsx`
 
 **Step 1: Import hook**
@@ -1361,6 +1479,7 @@ import { useOfflineQueue } from '@/hooks/useOfflineQueue';
 **Step 2: Add hook usage**
 
 Inside component:
+
 ```tsx
 const { pendingCount } = useOfflineQueue();
 ```
@@ -1368,14 +1487,13 @@ const { pendingCount } = useOfflineQueue();
 **Step 3: Add badge to Capture icon**
 
 Find the Capture nav item and add a badge:
+
 ```tsx
 <Link
   key={item.href}
   href={item.href}
   className={`relative flex flex-1 flex-col items-center gap-1 py-3 text-xs font-medium transition-colors ${
-    isActive
-      ? 'text-gray-900'
-      : 'text-gray-500'
+    isActive ? 'text-gray-900' : 'text-gray-500'
   }`}
 >
   {Icons[item.icon as keyof typeof Icons]}
@@ -1405,6 +1523,7 @@ git commit -m "feat: add pending count badge to BottomNav"
 ## Phase 3 Complete Checkpoint
 
 Test offline functionality:
+
 - Go offline (Chrome DevTools > Network > Offline)
 - Drop an image or record voice
 - Should see "Saved offline" confirmation
@@ -1420,6 +1539,7 @@ Test offline functionality:
 ### Task 21: Test on Real Mobile Device
 
 Manual testing checklist:
+
 - [ ] App installs to home screen
 - [ ] Launches in standalone mode
 - [ ] Bottom nav is thumb-friendly
@@ -1441,6 +1561,7 @@ git commit -m "feat: complete mobile & PWA improvements"
 ## Summary
 
 This plan delivers:
+
 1. **Mobile layout** - Bottom nav, responsive components, larger tap targets
 2. **PWA** - Installable, cached assets, standalone mode
 3. **Offline capture** - Save to IndexedDB, sync when online, visual queue

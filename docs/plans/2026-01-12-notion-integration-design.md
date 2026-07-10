@@ -9,25 +9,25 @@ Add a "Send to Notion" feature that allows users to manually push Discoveries an
 - **Trigger**: Manual button on each Discovery/Note card
 - **Destination**: Specific Notion page (items appended as blocks)
 - **Format**: Simple paragraph - `[timestamp] Type: Name - Description` or `[timestamp] Note: transcription`
-- **Auth**: 
+- **Auth**:
   - Owner uses env variables (`NOTION_API_KEY`, `NOTION_PAGE_ID`)
   - Other users configure via Settings page
 
 ## New Files
 
-| File | Purpose |
-|------|---------|
+| File                      | Purpose                              |
+| ------------------------- | ------------------------------------ |
 | `app/api/notion/route.ts` | API endpoint to post items to Notion |
-| `app/settings/page.tsx` | Settings page for Notion credentials |
-| `lib/notion.ts` | Notion client wrapper |
+| `app/settings/page.tsx`   | Settings page for Notion credentials |
+| `lib/notion.ts`           | Notion client wrapper                |
 
 ## Modified Files
 
-| File | Change |
-|------|--------|
+| File                           | Change                      |
+| ------------------------------ | --------------------------- |
 | `components/DiscoveryCard.tsx` | Add "Send to Notion" button |
-| `components/NoteCard.tsx` | Add "Send to Notion" button |
-| `components/BottomNav.tsx` | Add Settings nav item |
+| `components/NoteCard.tsx`      | Add "Send to Notion" button |
+| `components/BottomNav.tsx`     | Add Settings nav item       |
 
 ## Data Flow
 
@@ -40,6 +40,7 @@ Add a "Send to Notion" feature that allows users to manually push Discoveries an
 ## Credential Storage
 
 Dual storage for non-owner users:
+
 - `localStorage` for immediate access and offline capability
 - `user_settings` Supabase table for cross-device sync
 
@@ -81,12 +82,12 @@ CREATE POLICY "Users can manage own settings" ON user_settings
 
 ## Button States
 
-| State | Display |
-|-------|---------|
+| State   | Display              |
+| ------- | -------------------- |
 | Default | Notion icon (subtle) |
-| Loading | Spinner |
-| Success | Checkmark (2s) |
-| Error | Red icon with retry |
+| Loading | Spinner              |
+| Success | Checkmark (2s)       |
+| Error   | Red icon with retry  |
 
 ## Environment Variables
 

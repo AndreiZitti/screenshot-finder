@@ -10,10 +10,7 @@ export async function POST(request: NextRequest) {
     const { url, name, platform } = body;
 
     if (!url) {
-      return NextResponse.json(
-        { error: 'URL is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
 
     const { user } = await createClientFromRequest(request);

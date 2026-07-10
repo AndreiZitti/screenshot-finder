@@ -3,7 +3,12 @@
 import { Suspense, useState, useMemo } from 'react';
 import NextLink from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Discovery, DiscoveryType, DISCOVERY_TYPES, DISCOVERY_TYPE_LABELS } from '@/types/discovery';
+import {
+  Discovery,
+  DiscoveryType,
+  DISCOVERY_TYPES,
+  DISCOVERY_TYPE_LABELS,
+} from '@/types/discovery';
 import { Link } from '@/types/link';
 import DiscoveryCard from '@/components/DiscoveryCard';
 import LinkCard from '@/components/LinkCard';
@@ -21,22 +26,12 @@ const TYPE_ICONS: Record<DiscoveryType, string> = {
 
 type FilterType = 'all' | 'links' | DiscoveryType;
 
-type StashItem =
-  | { kind: 'discovery'; data: Discovery }
-  | { kind: 'link'; data: Link };
+type StashItem = { kind: 'discovery'; data: Discovery } | { kind: 'link'; data: Link };
 
 function LibraryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const {
-    discoveries,
-    links,
-    isLoading,
-    isOffline,
-    isCached,
-    removeDiscovery,
-    removeLink,
-  } = useStashCache();
+  const { discoveries, links, isLoading, isOffline, removeDiscovery, removeLink } = useStashCache();
 
   const activeFilter = (searchParams.get('type') as FilterType) || 'all';
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,12 +45,16 @@ function LibraryContent() {
   };
 
   // Combine and sort all items by date
-  const allItems: StashItem[] = useMemo(() => [
-    ...discoveries.map((d) => ({ kind: 'discovery' as const, data: d })),
-    ...links.map((l) => ({ kind: 'link' as const, data: l })),
-  ].sort((a, b) =>
-    new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime()
-  ), [discoveries, links]);
+  const allItems: StashItem[] = useMemo(
+    () =>
+      [
+        ...discoveries.map((d) => ({ kind: 'discovery' as const, data: d })),
+        ...links.map((l) => ({ kind: 'link' as const, data: l })),
+      ].sort(
+        (a, b) => new Date(b.data.created_at).getTime() - new Date(a.data.created_at).getTime(),
+      ),
+    [discoveries, links],
+  );
 
   // Search across all text fields of an item
   const matchesSearch = (item: StashItem, query: string): boolean => {
@@ -76,11 +75,12 @@ function LibraryContent() {
   };
 
   const filteredItems = useMemo(() => {
-    let items = activeFilter === 'all'
-      ? allItems
-      : activeFilter === 'links'
-      ? allItems.filter((item) => item.kind === 'link')
-      : allItems.filter((item) => item.kind === 'discovery' && item.data.type === activeFilter);
+    let items =
+      activeFilter === 'all'
+        ? allItems
+        : activeFilter === 'links'
+          ? allItems.filter((item) => item.kind === 'link')
+          : allItems.filter((item) => item.kind === 'discovery' && item.data.type === activeFilter);
 
     if (searchQuery.trim()) {
       items = items.filter((item) => matchesSearch(item, searchQuery.trim()));
@@ -109,12 +109,7 @@ function LibraryContent() {
 
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">Stash</h1>
-        <p className="mt-2 text-gray-600">
-          Your saved items
-          {isCached && !isOffline && (
-            <span className="ml-2 text-xs text-gray-400">(cached)</span>
-          )}
-        </p>
+        <p className="mt-2 text-gray-600">Your saved items</p>
       </div>
 
       {/* Search */}
@@ -126,7 +121,12 @@ function LibraryContent() {
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
         </svg>
         <input
           type="text"
@@ -138,10 +138,22 @@ function LibraryContent() {
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-0 top-1/2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center text-gray-400 hover:text-gray-600"
+            aria-label="Clear search"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         )}
@@ -151,7 +163,7 @@ function LibraryContent() {
       <div className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:justify-center sm:overflow-x-visible sm:pb-0">
         <button
           onClick={() => setFilter('all')}
-          className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+          className={`min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             activeFilter === 'all'
               ? 'bg-gray-900 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -162,7 +174,7 @@ function LibraryContent() {
         {links.length > 0 && (
           <button
             onClick={() => setFilter('links')}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+            className={`min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
               activeFilter === 'links'
                 ? 'bg-gray-900 text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -171,18 +183,17 @@ function LibraryContent() {
             🔗 Links ({links.length})
           </button>
         )}
-        {DISCOVERY_TYPES
-          .map((type) => ({
-            ...type,
-            count: discoveries.filter((d) => d.type === type.value).length,
-          }))
+        {DISCOVERY_TYPES.map((type) => ({
+          ...type,
+          count: discoveries.filter((d) => d.type === type.value).length,
+        }))
           .sort((a, b) => b.count - a.count)
           .filter((type) => type.count > 0)
           .map((type) => (
             <button
               key={type.value}
               onClick={() => setFilter(type.value)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              className={`min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                 activeFilter === type.value
                   ? 'bg-gray-900 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -229,12 +240,8 @@ function LibraryContent() {
                 onDelete={handleDeleteDiscovery}
               />
             ) : (
-              <LinkCard
-                key={`link-${item.data.id}`}
-                link={item.data}
-                onDelete={handleDeleteLink}
-              />
-            )
+              <LinkCard key={`link-${item.data.id}`} link={item.data} onDelete={handleDeleteLink} />
+            ),
           )}
         </div>
       )}
@@ -244,11 +251,13 @@ function LibraryContent() {
 
 export default function Library() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+        </div>
+      }
+    >
       <LibraryContent />
     </Suspense>
   );

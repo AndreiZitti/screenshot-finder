@@ -21,11 +21,11 @@ interface ImageParticleLoaderProps {
   onComplete?: () => void;
 }
 
-export default function ImageParticleLoader({ 
-  imageFile, 
+export default function ImageParticleLoader({
+  imageFile,
   isAnalyzing,
   status,
-  onComplete 
+  onComplete,
 }: ImageParticleLoaderProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | null>(null);
@@ -89,9 +89,7 @@ export default function ImageParticleLoader({
 
         // Fade to gray as they form the skeleton
         const grayness = eased;
-        ctx.fillStyle = grayness > 0.5
-          ? `rgb(200,200,200)`
-          : p.color;
+        ctx.fillStyle = grayness > 0.5 ? `rgb(200,200,200)` : p.color;
         ctx.globalAlpha = 0.7 + eased * 0.3;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size * (1 - eased * 0.3), 0, Math.PI * 2);
@@ -193,11 +191,11 @@ export default function ImageParticleLoader({
             // Calculate target position on card skeleton
             const cardX = (canvas.width - CARD_WIDTH) / 2;
             const cardY = (canvas.height - CARD_HEIGHT) / 2;
-            
+
             // Map particle to card skeleton shape
             const normalizedX = x / drawWidth;
             const normalizedY = y / drawHeight;
-            
+
             let targetX: number;
             let targetY: number;
 
@@ -221,7 +219,7 @@ export default function ImageParticleLoader({
             } else {
               // Interior - form skeleton lines
               const row = Math.floor(normalizedY * 4);
-              targetX = cardX + 20 + (normalizedX * 0.7 * CARD_WIDTH);
+              targetX = cardX + 20 + normalizedX * 0.7 * CARD_WIDTH;
               targetY = cardY + 30 + row * 30;
             }
 
@@ -271,11 +269,7 @@ export default function ImageParticleLoader({
 
   return (
     <div className="flex flex-col items-center">
-      <canvas
-        ref={canvasRef}
-        className="rounded-lg"
-        style={{ maxWidth: '100%', height: 'auto' }}
-      />
+      <canvas ref={canvasRef} className="rounded-lg" style={{ maxWidth: '100%', height: 'auto' }} />
       <p className="mt-3 text-sm text-gray-500">
         {status || (
           <>
@@ -299,7 +293,7 @@ function drawRoundedRect(
   y: number,
   width: number,
   height: number,
-  radius: number
+  radius: number,
 ) {
   ctx.beginPath();
   ctx.moveTo(x + radius, y);

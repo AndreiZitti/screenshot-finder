@@ -7,13 +7,6 @@ import {
   upsertFromRemote as upsertDiscoveryFromRemote,
 } from './discoveries-dal';
 import {
-  getAllNotes,
-  getDirtyNotes,
-  deleteNote,
-  markClean as markNoteClean,
-  upsertFromRemote as upsertNoteFromRemote,
-} from './notes-dal';
-import {
   getAllLinks,
   getDirtyLinks,
   deleteLink,
@@ -21,7 +14,6 @@ import {
   upsertFromRemote as upsertLinkFromRemote,
 } from './links-dal';
 import type { Discovery } from '@/types/discovery';
-import type { Note } from '@/types/note';
 import type { Link } from '@/types/link';
 
 const MAX_RETRY_DELAY_MS = 60_000;
@@ -35,7 +27,7 @@ function wait(ms: number): Promise<void> {
  * Strip sync-only fields before sending to Supabase.
  */
 function stripSyncFields<T extends { _dirty: boolean; _synced_at: string | null }>(
-  record: T
+  record: T,
 ): Omit<T, '_dirty' | '_synced_at'> {
   const { _dirty: dirty, _synced_at: syncedAt, ...rest } = record;
   void dirty;
@@ -45,21 +37,15 @@ function stripSyncFields<T extends { _dirty: boolean; _synced_at: string | null 
 
 export async function getDirtySyncCounts(): Promise<{
   discoveries: number;
-  notes: number;
   links: number;
   total: number;
 }> {
-  const [discoveries, notes, links] = await Promise.all([
-    getDirtyDiscoveries(),
-    getDirtyNotes(),
-    getDirtyLinks(),
-  ]);
+  const [discoveries, links] = await Promise.all([getDirtyDiscoveries(), getDirtyLinks()]);
 
   return {
     discoveries: discoveries.length,
-    notes: notes.length,
     links: links.length,
-    total: discoveries.length + notes.length + links.length,
+    total: discoveries.length + links.length,
   };
 }
 
@@ -68,16 +54,16 @@ export async function getDirtySyncCounts(): Promise<{
  */
 export async function pushToSupabase(): Promise<void> {
   const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return; // Can't push without authentication
 
   // Push dirty discoveries
   const dirtyDiscoveries = await getDirtyDiscoveries();
   for (const discovery of dirtyDiscoveries) {
     const clean = { ...stripSyncFields(discovery), user_id: user.id };
-    const { error } = await supabase
-      .from('discoveries')
-      .upsert(clean, { onConflict: 'id' });
+    const { error } = await supabase.from('discoveries').upsert(clean, { onConflict: 'id' });
     if (!error) {
       await markDiscoveryClean(discovery.id);
     } else {
@@ -85,27 +71,11 @@ export async function pushToSupabase(): Promise<void> {
     }
   }
 
-  // Push dirty notes
-  const dirtyNotes = await getDirtyNotes();
-  for (const note of dirtyNotes) {
-    const clean = { ...stripSyncFields(note), user_id: user.id };
-    const { error } = await supabase
-      .from('notes')
-      .upsert(clean, { onConflict: 'id' });
-    if (!error) {
-      await markNoteClean(note.id);
-    } else {
-      console.error('[sync] Failed to push note', note.id, error.message);
-    }
-  }
-
   // Push dirty links
   const dirtyLinks = await getDirtyLinks();
   for (const link of dirtyLinks) {
     const clean = { ...stripSyncFields(link), user_id: user.id };
-    const { error } = await supabase
-      .from('links')
-      .upsert(clean, { onConflict: 'id' });
+    const { error } = await supabase.from('links').upsert(clean, { onConflict: 'id' });
     if (!error) {
       await markLinkClean(link.id);
     } else {
@@ -121,9 +91,7 @@ export async function pullFromSupabase(): Promise<void> {
   const supabase = createClient();
 
   // Pull discoveries
-  const { data: discoveries, error: dErr } = await supabase
-    .from('discoveries')
-    .select('*');
+  const { data: discoveries, error: dErr } = await supabase.from('discoveries').select('*');
   if (dErr) {
     console.error('[sync] Failed to pull discoveries', dErr.message);
   } else if (discoveries) {
@@ -131,7 +99,7 @@ export async function pullFromSupabase(): Promise<void> {
       await upsertDiscoveryFromRemote(d);
     }
     // Remove local records deleted server-side (keep dirty/unsynced ones)
-    const remoteDiscoveryIds = new Set((discoveries as Discovery[]).map(d => d.id));
+    const remoteDiscoveryIds = new Set((discoveries as Discovery[]).map((d) => d.id));
     for (const local of await getAllDiscoveries()) {
       if (!remoteDiscoveryIds.has(local.id) && !local._dirty) {
         await deleteDiscovery(local.id);
@@ -139,35 +107,15 @@ export async function pullFromSupabase(): Promise<void> {
     }
   }
 
-  // Pull notes
-  const { data: notes, error: nErr } = await supabase
-    .from('notes')
-    .select('*');
-  if (nErr) {
-    console.error('[sync] Failed to pull notes', nErr.message);
-  } else if (notes) {
-    for (const n of notes as Note[]) {
-      await upsertNoteFromRemote(n);
-    }
-    const remoteNoteIds = new Set((notes as Note[]).map(n => n.id));
-    for (const local of await getAllNotes()) {
-      if (!remoteNoteIds.has(local.id) && !local._dirty) {
-        await deleteNote(local.id);
-      }
-    }
-  }
-
   // Pull links
-  const { data: links, error: lErr } = await supabase
-    .from('links')
-    .select('*');
+  const { data: links, error: lErr } = await supabase.from('links').select('*');
   if (lErr) {
     console.error('[sync] Failed to pull links', lErr.message);
   } else if (links) {
     for (const l of links as Link[]) {
       await upsertLinkFromRemote(l);
     }
-    const remoteLinkIds = new Set((links as Link[]).map(l => l.id));
+    const remoteLinkIds = new Set((links as Link[]).map((l) => l.id));
     for (const local of await getAllLinks()) {
       if (!remoteLinkIds.has(local.id) && !local._dirty) {
         await deleteLink(local.id);
@@ -196,7 +144,9 @@ export async function syncUntilClean(): Promise<void> {
 
     while (typeof navigator === 'undefined' || navigator.onLine) {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) return;
 
       await fullSync();
@@ -222,7 +172,9 @@ export async function syncUntilClean(): Promise<void> {
 export async function autoSync(): Promise<void> {
   try {
     const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
     if (!session) {
       // Not authenticated — skip sync (guest mode)

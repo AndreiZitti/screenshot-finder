@@ -4,7 +4,7 @@ import { deleteStashItem, getStashItem, normalizeKind } from '@/lib/control-stas
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ kind: string; id: string }> }
+  { params }: { params: Promise<{ kind: string; id: string }> },
 ) {
   try {
     const { supabase, user } = await createClientFromRequest(request);
@@ -17,7 +17,7 @@ export async function DELETE(
     if (!kind) {
       return NextResponse.json(
         { error: 'Invalid kind. Use discoveries, links, notes, discovery, link, or note.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -35,9 +35,6 @@ export async function DELETE(
     });
   } catch (error) {
     console.error('Control stash delete error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete stash item' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to delete stash item' }, { status: 500 });
   }
 }

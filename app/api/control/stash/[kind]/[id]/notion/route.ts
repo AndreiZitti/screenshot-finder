@@ -9,7 +9,7 @@ import {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ kind: string; id: string }> }
+  { params }: { params: Promise<{ kind: string; id: string }> },
 ) {
   try {
     const { supabase, user } = await createClientFromRequest(request);
@@ -22,7 +22,7 @@ export async function POST(
     if (!kind) {
       return NextResponse.json(
         { error: 'Invalid kind. Use discoveries, links, notes, discovery, link, or note.' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -39,7 +39,7 @@ export async function POST(
     if (!notionResult.success) {
       return NextResponse.json(
         { error: notionResult.error || 'Failed to send item to Notion' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -55,9 +55,6 @@ export async function POST(
     });
   } catch (error) {
     console.error('Control stash Notion send error:', error);
-    return NextResponse.json(
-      { error: 'Failed to send stash item to Notion' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to send stash item to Notion' }, { status: 500 });
   }
 }

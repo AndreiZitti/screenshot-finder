@@ -7,18 +7,11 @@ export async function getAllLinks(archived?: boolean): Promise<LocalLink[]> {
 
   if (archived === undefined) return all;
 
-  return all.filter((l) =>
-    archived ? l.archived_at !== null : l.archived_at === null
-  );
-}
-
-export async function getLinkById(id: string): Promise<LocalLink | undefined> {
-  const db = await getDB();
-  return db.get('links', id);
+  return all.filter((l) => (archived ? l.archived_at !== null : l.archived_at === null));
 }
 
 export async function createLink(
-  link: Omit<Link, 'id' | 'created_at' | 'archived_at'>
+  link: Omit<Link, 'id' | 'created_at' | 'archived_at'>,
 ): Promise<LocalLink> {
   const db = await getDB();
   const record: LocalLink = {
@@ -35,7 +28,7 @@ export async function createLink(
 
 export async function updateLink(
   id: string,
-  updates: Partial<Link>
+  updates: Partial<Link>,
 ): Promise<LocalLink | undefined> {
   const db = await getDB();
   const existing = await db.get('links', id);
@@ -55,7 +48,6 @@ export async function deleteLink(id: string): Promise<void> {
   const db = await getDB();
   await db.delete('links', id);
 }
-
 
 export async function getDirtyLinks(): Promise<LocalLink[]> {
   const db = await getDB();

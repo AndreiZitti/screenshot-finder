@@ -18,11 +18,11 @@ export default function Error({
     <div className="min-h-[60vh] flex items-center justify-center p-4">
       <div className="text-center max-w-md">
         <div className="text-6xl mb-4">
-          <span role="img" aria-label="Error">!</span>
+          <span role="img" aria-label="Error">
+            !
+          </span>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Something went wrong
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
         <p className="text-gray-600 mb-6">
           An unexpected error occurred. Please try again or refresh the page.
         </p>
@@ -40,11 +40,7 @@ export default function Error({
             Refresh page
           </button>
         </div>
-        {error.digest && (
-          <p className="mt-6 text-xs text-gray-400">
-            Error ID: {error.digest}
-          </p>
-        )}
+        {error.digest && <p className="mt-6 text-xs text-gray-400">Error ID: {error.digest}</p>}
       </div>
     </div>
   );

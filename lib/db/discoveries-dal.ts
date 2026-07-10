@@ -7,18 +7,11 @@ export async function getAllDiscoveries(archived?: boolean): Promise<LocalDiscov
 
   if (archived === undefined) return all;
 
-  return all.filter((d) =>
-    archived ? d.archived_at !== null : d.archived_at === null
-  );
-}
-
-export async function getDiscoveryById(id: string): Promise<LocalDiscovery | undefined> {
-  const db = await getDB();
-  return db.get('discoveries', id);
+  return all.filter((d) => (archived ? d.archived_at !== null : d.archived_at === null));
 }
 
 export async function createDiscovery(
-  discovery: Omit<Discovery, 'id' | 'created_at' | 'archived_at'>
+  discovery: Omit<Discovery, 'id' | 'created_at' | 'archived_at'>,
 ): Promise<LocalDiscovery> {
   const db = await getDB();
   const record: LocalDiscovery = {
@@ -35,7 +28,7 @@ export async function createDiscovery(
 
 export async function updateDiscovery(
   id: string,
-  updates: Partial<Discovery>
+  updates: Partial<Discovery>,
 ): Promise<LocalDiscovery | undefined> {
   const db = await getDB();
   const existing = await db.get('discoveries', id);
@@ -55,7 +48,6 @@ export async function deleteDiscovery(id: string): Promise<void> {
   const db = await getDB();
   await db.delete('discoveries', id);
 }
-
 
 export async function getDirtyDiscoveries(): Promise<LocalDiscovery[]> {
   const db = await getDB();

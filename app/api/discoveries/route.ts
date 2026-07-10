@@ -18,10 +18,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Supabase fetch error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch discoveries' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch discoveries' }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -30,13 +27,10 @@ export async function GET(request: NextRequest) {
         headers: {
           'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
         },
-      }
+      },
     );
   } catch (error) {
     console.error('Fetch error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch discoveries' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch discoveries' }, { status: 500 });
   }
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useApiKeys } from '@/hooks/useApiKeys';
-import { useNotionConnections } from '@/hooks/useNotionConnections';
+import { useNotionConnections } from '@/contexts/NotionConnectionsContext';
 import { useToast } from '@/contexts/ToastContext';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import type { NotionConnectionInput } from '@/types/notion';
@@ -12,7 +12,12 @@ import { createClient } from '@/lib/supabase/client';
 function MaskedKey({ value }: { value: string }) {
   if (!value) return <span className="text-gray-400">Not set</span>;
   const last4 = value.slice(-4);
-  return <span className="font-mono text-sm text-gray-600">{'*'.repeat(8)}{last4}</span>;
+  return (
+    <span className="font-mono text-sm text-gray-600">
+      {'*'.repeat(8)}
+      {last4}
+    </span>
+  );
 }
 
 function ApiKeyField({
@@ -73,13 +78,16 @@ function ApiKeyField({
               <button
                 onClick={handleSave}
                 disabled={!inputValue.trim() || isSaving}
-                className="shrink-0 rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                className="min-h-11 shrink-0 rounded bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-50"
               >
                 Save
               </button>
               <button
-                onClick={() => { setIsEditing(false); setInputValue(''); }}
-                className="shrink-0 rounded px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                onClick={() => {
+                  setIsEditing(false);
+                  setInputValue('');
+                }}
+                className="min-h-11 shrink-0 rounded px-3 py-1.5 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
               >
                 Cancel
               </button>
@@ -93,7 +101,7 @@ function ApiKeyField({
         <div className="flex gap-2">
           <button
             onClick={() => setIsEditing(true)}
-            className="rounded px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+            className="min-h-11 rounded px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
           >
             {value ? 'Change' : 'Set'}
           </button>
@@ -101,7 +109,7 @@ function ApiKeyField({
             <button
               onClick={handleClear}
               disabled={isSaving}
-              className="rounded px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+              className="min-h-11 rounded px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
             >
               Clear
             </button>
@@ -151,11 +159,14 @@ function NotionConnectionForm({
         <button
           onClick={() => onSubmit({ name, api_key: apiKey, page_id: pageId })}
           disabled={!name.trim() || !apiKey.trim() || !pageId.trim() || isSaving}
-          className="rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+          className="min-h-11 rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
         >
           {isSaving ? 'Saving...' : 'Add connection'}
         </button>
-        <button onClick={onCancel} className="rounded px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
+        <button
+          onClick={onCancel}
+          className="min-h-11 rounded px-4 py-2 text-sm text-gray-500 hover:text-gray-700"
+        >
           Cancel
         </button>
       </div>
@@ -221,7 +232,9 @@ export default function SettingsPage() {
 
       {/* Account */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">Account</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+          Account
+        </h2>
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
             <div>
@@ -235,7 +248,7 @@ export default function SettingsPage() {
             {!isGuest && (
               <button
                 onClick={handleSignOut}
-                className="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+                className="min-h-11 rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
               >
                 Sign out
               </button>
@@ -246,7 +259,9 @@ export default function SettingsPage() {
 
       {/* API Keys */}
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">API Key</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+          API Key
+        </h2>
         {keysLoading ? (
           <div className="space-y-3">
             <div className="h-16 animate-pulse rounded-lg border border-gray-200 bg-gray-50" />
@@ -257,7 +272,8 @@ export default function SettingsPage() {
           </div>
         )}
         <p className="mt-2 text-xs text-gray-400">
-          Gemini is used for image analysis, link enrichment, and voice transcription. If not set, the app falls back to the shared key.
+          Gemini is used for image analysis, link enrichment, and voice transcription. If not set,
+          the app falls back to the shared key.
         </p>
       </section>
 
@@ -265,11 +281,13 @@ export default function SettingsPage() {
       {!isGuest && (
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Notion Connections</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              Notion Connections
+            </h2>
             {!showAddForm && (
               <button
                 onClick={() => setShowAddForm(true)}
-                className="rounded px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
+                className="min-h-11 rounded px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100"
               >
                 + Add
               </button>
@@ -321,7 +339,7 @@ export default function SettingsPage() {
                     {!conn.is_default && (
                       <button
                         onClick={() => handleSetDefault(conn.id)}
-                        className="rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                        className="min-h-11 rounded px-2 py-1 text-xs text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                         title="Set as default"
                       >
                         Set default
@@ -329,11 +347,23 @@ export default function SettingsPage() {
                     )}
                     <button
                       onClick={() => setDeleteTarget({ id: conn.id, name: conn.name })}
-                      className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                      className="flex min-h-11 min-w-11 items-center justify-center rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                      aria-label={`Remove ${conn.name}`}
                       title="Remove connection"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
                       </svg>
                     </button>
                   </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useNotionConnections } from './useNotionConnections';
+import { useNotionConnections } from '@/contexts/NotionConnectionsContext';
 import type { NotionConnection } from '@/types/notion';
 
 type SendStatus = 'idle' | 'sending' | 'success' | 'error';
@@ -22,57 +22,60 @@ export function useSendToNotion() {
   const [status, setStatus] = useState<SendStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
-  const send = useCallback(async (options: SendToNotionOptions) => {
-    // Find the connection to use
-    let connection: NotionConnection | null = null;
-    
-    if (options.connectionId) {
-      connection = connections.find(c => c.id === options.connectionId) || null;
-    } else {
-      connection = getDefault();
-    }
+  const send = useCallback(
+    async (options: SendToNotionOptions) => {
+      // Find the connection to use
+      let connection: NotionConnection | null = null;
 
-    if (!connection) {
-      setStatus('error');
-      setError('No Notion connection configured');
-      return { success: false, error: 'No Notion connection configured' };
-    }
-
-    setStatus('sending');
-    setError(null);
-
-    try {
-      const response = await fetch('/api/notion', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...options,
-          credentials: {
-            apiKey: connection.api_key,
-            pageId: connection.page_id,
-          },
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setStatus('success');
-        // Reset to idle after 2 seconds
-        setTimeout(() => setStatus('idle'), 2000);
-        return { success: true };
+      if (options.connectionId) {
+        connection = connections.find((c) => c.id === options.connectionId) || null;
       } else {
-        setStatus('error');
-        setError(result.error || 'Failed to send to Notion');
-        return { success: false, error: result.error };
+        connection = getDefault();
       }
-    } catch (err) {
-      setStatus('error');
-      const message = err instanceof Error ? err.message : 'Failed to send to Notion';
-      setError(message);
-      return { success: false, error: message };
-    }
-  }, [connections, getDefault]);
+
+      if (!connection) {
+        setStatus('error');
+        setError('No Notion connection configured');
+        return { success: false, error: 'No Notion connection configured' };
+      }
+
+      setStatus('sending');
+      setError(null);
+
+      try {
+        const response = await fetch('/api/notion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...options,
+            credentials: {
+              apiKey: connection.api_key,
+              pageId: connection.page_id,
+            },
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          setStatus('success');
+          // Reset to idle after 2 seconds
+          setTimeout(() => setStatus('idle'), 2000);
+          return { success: true };
+        } else {
+          setStatus('error');
+          setError(result.error || 'Failed to send to Notion');
+          return { success: false, error: result.error };
+        }
+      } catch (err) {
+        setStatus('error');
+        const message = err instanceof Error ? err.message : 'Failed to send to Notion';
+        setError(message);
+        return { success: false, error: message };
+      }
+    },
+    [connections, getDefault],
+  );
 
   const reset = useCallback(() => {
     setStatus('idle');

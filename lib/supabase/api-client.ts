@@ -14,14 +14,18 @@ export async function createClientFromRequest(request: NextRequest) {
       {
         global: { headers: { Authorization: `Bearer ${bearerToken}` } },
         db: { schema: 'stash' },
-      }
+      },
     );
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     return { supabase, user: isAllowedUser(user) ? user : null };
   }
 
   const supabase = await createCookieClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return { supabase, user: isAllowedUser(user) ? user : null };
 }
 

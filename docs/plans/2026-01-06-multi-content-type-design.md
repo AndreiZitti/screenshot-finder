@@ -6,13 +6,13 @@ Evolve the app from series-only to support multiple content types discovered fro
 
 ## Content Types
 
-| Type | Description | Example |
-|------|-------------|---------|
-| `series` | TV shows, movies, anime | Breaking Bad, Supercube |
-| `api_library` | Programming libraries, APIs, SDKs | React, Stripe API |
-| `ai_tip` | AI prompts, techniques, tools | Chain-of-thought prompting |
-| `gadget` | Hardware, devices, accessories | Steam Deck, AirPods |
-| `other` | Catch-all for miscellaneous | Books, courses, etc. |
+| Type          | Description                       | Example                    |
+| ------------- | --------------------------------- | -------------------------- |
+| `series`      | TV shows, movies, anime           | Breaking Bad, Supercube    |
+| `api_library` | Programming libraries, APIs, SDKs | React, Stripe API          |
+| `ai_tip`      | AI prompts, techniques, tools     | Chain-of-thought prompting |
+| `gadget`      | Hardware, devices, accessories    | Steam Deck, AirPods        |
+| `other`       | Catch-all for miscellaneous       | Books, courses, etc.       |
 
 ## Database Schema
 
@@ -37,21 +37,30 @@ CREATE INDEX idx_discoveries_created_at ON discoveries(created_at DESC);
 ### Metadata Examples by Type
 
 **Series:**
+
 ```json
 { "rating": "8.5/10 IMDb", "seasons": "5", "genre": "Drama", "where_to_watch": "Netflix" }
 ```
 
 **API/Library:**
+
 ```json
-{ "stars": "45k", "language": "TypeScript", "install": "npm install react", "docs": "https://react.dev" }
+{
+  "stars": "45k",
+  "language": "TypeScript",
+  "install": "npm install react",
+  "docs": "https://react.dev"
+}
 ```
 
 **AI Tip:**
+
 ```json
 { "category": "Prompting", "source": "Twitter/@user", "tools": ["ChatGPT", "Claude"] }
 ```
 
 **Gadget:**
+
 ```json
 { "price": "$399", "specs": "OLED, 512GB", "buy_at": "Amazon, Best Buy" }
 ```
@@ -91,26 +100,29 @@ Return JSON: { "description": "...", "link": "...", "metadata": {...} }
 ## UI Changes
 
 ### Upload Page
+
 - Dropdown selector above upload zone
 - Options: Series/Media, API/Library, AI Tips, Tech Gadgets, Other
 - Selected type passed to `/api/analyze`
 
 ### Library Page
+
 - Filter tabs: All | Series | APIs | AI Tips | Gadgets | Other
 - Default: "All" selected
 - URL query param for state: `/library?type=series`
 
 ### Discovery Card
+
 - Type badge in corner
 - Common fields: name, description, link, delete
 - Type-specific metadata rendering
 
 ## File Changes
 
-| Current | New |
-|---------|-----|
-| `types/series.ts` | `types/discovery.ts` |
-| `components/SeriesCard.tsx` | `components/DiscoveryCard.tsx` |
+| Current                        | New                                 |
+| ------------------------------ | ----------------------------------- |
+| `types/series.ts`              | `types/discovery.ts`                |
+| `components/SeriesCard.tsx`    | `components/DiscoveryCard.tsx`      |
 | `app/api/series/[id]/route.ts` | `app/api/discoveries/[id]/route.ts` |
 
 ## Implementation Order

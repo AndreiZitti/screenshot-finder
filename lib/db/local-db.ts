@@ -1,6 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Discovery } from '@/types/discovery';
-import type { Note } from '@/types/note';
 import type { Link } from '@/types/link';
 
 export interface SyncFields {
@@ -9,8 +8,16 @@ export interface SyncFields {
 }
 
 export type LocalDiscovery = Discovery & SyncFields;
-export type LocalNote = Note & SyncFields;
 export type LocalLink = Link & SyncFields;
+
+interface LegacyNote extends SyncFields {
+  id: string;
+  user_id?: string;
+  transcription: string;
+  notes?: string | null;
+  created_at: string;
+  archived_at: string | null;
+}
 
 interface ZStashDB extends DBSchema {
   discoveries: {
@@ -23,7 +30,7 @@ interface ZStashDB extends DBSchema {
   };
   notes: {
     key: string;
-    value: LocalNote;
+    value: LegacyNote;
     indexes: {
       created_at: string;
       archived_at: string;
@@ -45,23 +52,51 @@ interface ZStashDB extends DBSchema {
 
 let dbPromise: Promise<IDBPDatabase<ZStashDB>> | null = null;
 
+function noteName(transcription: string): string {
+  return transcription.length > 60 ? `${transcription.slice(0, 57)}...` : transcription;
+}
+
 export function getDB(): Promise<IDBPDatabase<ZStashDB>> {
   if (!dbPromise) {
-    dbPromise = openDB<ZStashDB>('z-stash-db', 1, {
-      upgrade(db) {
-        const discoveriesStore = db.createObjectStore('discoveries', { keyPath: 'id' });
-        discoveriesStore.createIndex('created_at', 'created_at');
-        discoveriesStore.createIndex('archived_at', 'archived_at');
+    dbPromise = openDB<ZStashDB>('z-stash-db', 2, {
+      upgrade(db, oldVersion, _newVersion, transaction) {
+        if (oldVersion < 1) {
+          const discoveriesStore = db.createObjectStore('discoveries', { keyPath: 'id' });
+          discoveriesStore.createIndex('created_at', 'created_at');
+          discoveriesStore.createIndex('archived_at', 'archived_at');
 
-        const notesStore = db.createObjectStore('notes', { keyPath: 'id' });
-        notesStore.createIndex('created_at', 'created_at');
-        notesStore.createIndex('archived_at', 'archived_at');
+          const linksStore = db.createObjectStore('links', { keyPath: 'id' });
+          linksStore.createIndex('created_at', 'created_at');
+          linksStore.createIndex('archived_at', 'archived_at');
 
-        const linksStore = db.createObjectStore('links', { keyPath: 'id' });
-        linksStore.createIndex('created_at', 'created_at');
-        linksStore.createIndex('archived_at', 'archived_at');
+          db.createObjectStore('settings', { keyPath: 'key' });
+        }
 
-        db.createObjectStore('settings', { keyPath: 'key' });
+        if (oldVersion === 1 && db.objectStoreNames.contains('notes')) {
+          const notesStore = transaction.objectStore('notes');
+          const discoveriesStore = transaction.objectStore('discoveries');
+
+          void notesStore.getAll().then((notes) => {
+            for (const note of notes) {
+              void discoveriesStore.put({
+                id: note.id,
+                user_id: note.user_id,
+                type: 'note',
+                name: noteName(note.transcription),
+                description: note.transcription,
+                link: null,
+                metadata: null,
+                image_url: null,
+                notes: note.notes || null,
+                created_at: note.created_at,
+                archived_at: note.archived_at,
+                _dirty: note._dirty,
+                _synced_at: note._synced_at,
+              });
+            }
+            db.deleteObjectStore('notes');
+          });
+        }
       },
     });
   }

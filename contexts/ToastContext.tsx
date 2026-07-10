@@ -41,8 +41,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               toast.variant === 'success'
                 ? 'bg-green-600 text-white'
                 : toast.variant === 'error'
-                ? 'bg-red-600 text-white'
-                : 'bg-gray-800 text-white'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-gray-800 text-white'
             }`}
           >
             {toast.message}

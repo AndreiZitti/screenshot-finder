@@ -30,12 +30,16 @@ yarn-error.log*
 # Vercel
 .vercel
 
+# Local assistant and tool state
+.claude/
+.codex/
+.mcp.json
+.serena/memories/
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
 
 # PWA
-public/sw.js
 public/workbox-*.js
-public/sw.js.map
 public/workbox-*.js.map

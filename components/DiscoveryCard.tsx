@@ -45,7 +45,7 @@ const METADATA_LABELS: Record<string, string> = {
 function formatMetadataValue(value: unknown): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'string' || typeof value === 'number') return String(value);
-  if (Array.isArray(value)) return value.map(v => formatMetadataValue(v)).join(', ');
+  if (Array.isArray(value)) return value.map((v) => formatMetadataValue(v)).join(', ');
   if (typeof value === 'object') {
     return Object.entries(value)
       .map(([k, v]) => `${k}: ${formatMetadataValue(v)}`)
@@ -101,7 +101,7 @@ export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProp
 
   const metadata = discovery.metadata || {};
   const metadataEntries = Object.entries(metadata).filter(
-    ([, value]) => value && value !== 'Unknown'
+    ([, value]) => value && value !== 'Unknown',
   );
 
   return (
@@ -111,7 +111,9 @@ export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProp
           {/* Header with type badge and delete button */}
           <div className="mb-3 flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[discovery.type]}`}>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${TYPE_COLORS[discovery.type]}`}
+              >
                 {DISCOVERY_TYPE_LABELS[discovery.type]}
               </span>
             </div>
@@ -127,7 +129,8 @@ export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProp
                   setIsEditingNotes(!isEditingNotes);
                   if (!isEditingNotes) setNotesValue(savedNotes);
                 }}
-                className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Add or edit notes"
                 title="Add/edit notes"
               >
                 <svg
@@ -148,7 +151,8 @@ export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProp
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
-                className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                aria-label="Delete from stash"
                 title="Delete from library"
               >
                 <svg
@@ -171,18 +175,12 @@ export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProp
 
           {/* Name & Description */}
           {discovery.type === 'note' ? (
-            <p className="mb-3 text-gray-900">
-              {discovery.description || discovery.name}
-            </p>
+            <p className="mb-3 text-gray-900">{discovery.description || discovery.name}</p>
           ) : (
             <>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                {discovery.name}
-              </h3>
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">{discovery.name}</h3>
               {discovery.description && (
-                <p className="mb-3 text-sm text-gray-600 line-clamp-3">
-                  {discovery.description}
-                </p>
+                <p className="mb-3 text-sm text-gray-600 line-clamp-3">{discovery.description}</p>
               )}
             </>
           )}
@@ -227,10 +225,10 @@ export default function DiscoveryCard({ discovery, onDelete }: DiscoveryCardProp
             <div className="space-y-1.5 text-sm">
               {metadataEntries.map(([key, value]) => (
                 <div key={key} className="grid grid-cols-[5rem_minmax(0,1fr)] items-start gap-2">
-                  <span className="font-medium text-gray-500">
-                    {METADATA_LABELS[key] || key}:
+                  <span className="font-medium text-gray-500">{METADATA_LABELS[key] || key}:</span>
+                  <span className="min-w-0 break-words text-gray-900">
+                    {formatMetadataValue(value)}
                   </span>
-                  <span className="min-w-0 break-words text-gray-900">{formatMetadataValue(value)}</span>
                 </div>
               ))}
             </div>

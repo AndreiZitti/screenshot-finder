@@ -1,0 +1,9 @@
+.next/
+node_modules/
+public/sw.js
+public/workbox-*.js
+.serena/
+.claude/
+.codex/
+package-lock.json
+docs/screenshots/

@@ -62,7 +62,7 @@ export function useApiKeys() {
             .from('user_settings')
             .upsert(
               { user_id: user.id, gemini_api_key: key, updated_at: new Date().toISOString() },
-              { onConflict: 'user_id' }
+              { onConflict: 'user_id' },
             );
         } else {
           const db = await getDB();
@@ -74,7 +74,7 @@ export function useApiKeys() {
         throw error;
       }
     },
-    [user, isGuest]
+    [user, isGuest],
   );
 
   const hasApiKeys = Boolean(state.geminiApiKey);

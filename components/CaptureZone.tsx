@@ -62,7 +62,7 @@ export default function CaptureZone() {
 
   // Handle image files
   const handleFiles = useCallback((files: FileList) => {
-    const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+    const imageFiles = Array.from(files).filter((file) => file.type.startsWith('image/'));
     if (imageFiles.length > 0) {
       setPreviewImages(imageFiles);
       setMode('image-preview');
@@ -115,7 +115,9 @@ export default function CaptureZone() {
       }
 
       if (!data.results || data.results.length === 0) {
-        throw new Error('Could not identify anything in that image. Try adding a hint or choose a different type.');
+        throw new Error(
+          'Could not identify anything in that image. Try adding a hint or choose a different type.',
+        );
       }
 
       setAnalysisStatus('Saving to stash...');
@@ -136,9 +138,10 @@ export default function CaptureZone() {
       setPreviewImages([]);
       setMode('idle');
       setCustomHint('');
-      setSuccessMessage(data.results.length === 1
-        ? 'Saved 1 item to your stash.'
-        : `Saved ${data.results.length} items to your stash.`
+      setSuccessMessage(
+        data.results.length === 1
+          ? 'Saved 1 item to your stash.'
+          : `Saved ${data.results.length} items to your stash.`,
       );
       autoSync();
     } catch (err) {
@@ -165,9 +168,7 @@ export default function CaptureZone() {
     setError(null);
     setSuccessMessage(null);
     try {
-      const name = transcription.length > 60
-        ? transcription.slice(0, 57) + '...'
-        : transcription;
+      const name = transcription.length > 60 ? transcription.slice(0, 57) + '...' : transcription;
       await createDiscovery({
         type: 'note',
         name,
@@ -188,40 +189,6 @@ export default function CaptureZone() {
     }
   };
 
-  // Research transcription (use Gemini to look it up)
-  const researchTranscription = async (type: DiscoveryType) => {
-    if (!transcription) return;
-
-    setIsProcessing(true);
-    try {
-      // For now, we'll create a discovery directly with the transcription as the name
-      // In a full implementation, you'd extract the key term from the transcription
-      const response = await fetch('/api/analyze-text', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: transcription, type }),
-      });
-
-      if (!response.ok) {
-        // Fallback: save as note if text analysis isn't implemented
-        await saveAsNote();
-        return;
-      }
-
-      const data = await response.json();
-      if (data.result) {
-        setResults((prev) => [data.result, ...prev]);
-      }
-      setTranscription(null);
-      setMode('idle');
-    } catch (err) {
-      // Fallback to saving as note
-      await saveAsNote();
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const cancelTranscription = () => {
     setTranscription(null);
     setMode('idle');
@@ -230,13 +197,6 @@ export default function CaptureZone() {
   const cancelImagePreview = () => {
     setPreviewImages([]);
     setMode('idle');
-  };
-
-  const removeImage = (index: number) => {
-    setPreviewImages((prev) => prev.filter((_, i) => i !== index));
-    if (previewImages.length === 1) {
-      setMode('idle');
-    }
   };
 
   // Link input handlers
@@ -315,16 +275,21 @@ export default function CaptureZone() {
       autoSync();
 
       // When enrichment comes back, update the saved link
-      enrichPromise.then(async (enrichData: { description: string | null; suggestedTags: string[] }) => {
-        if (enrichData.description || (enrichData.suggestedTags && enrichData.suggestedTags.length > 0)) {
-          const { updateLink } = await import('@/lib/db/links-dal');
-          await updateLink(savedLink.id, {
-            description: enrichData.description || null,
-            tags: enrichData.suggestedTags || [],
-          });
-          autoSync();
-        }
-      });
+      enrichPromise.then(
+        async (enrichData: { description: string | null; suggestedTags: string[] }) => {
+          if (
+            enrichData.description ||
+            (enrichData.suggestedTags && enrichData.suggestedTags.length > 0)
+          ) {
+            const { updateLink } = await import('@/lib/db/links-dal');
+            await updateLink(savedLink.id, {
+              description: enrichData.description || null,
+              tags: enrichData.suggestedTags || [],
+            });
+            autoSync();
+          }
+        },
+      );
 
       // Auto-hide success message after 2 seconds
       setTimeout(() => setLinkSuccess(false), 2000);
@@ -370,7 +335,7 @@ export default function CaptureZone() {
         handleFiles(e.dataTransfer.files);
       }
     },
-    [handleFiles]
+    [handleFiles],
   );
 
   const handleInputChange = useCallback(
@@ -379,7 +344,7 @@ export default function CaptureZone() {
         handleFiles(e.target.files);
       }
     },
-    [handleFiles]
+    [handleFiles],
   );
 
   return (
@@ -399,9 +364,7 @@ export default function CaptureZone() {
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             className={`relative rounded-lg border-2 border-dashed p-6 sm:p-12 text-center transition-colors ${
-              isDragging
-                ? 'border-gray-900 bg-gray-50'
-                : 'border-gray-300 hover:border-gray-400'
+              isDragging ? 'border-gray-900 bg-gray-50' : 'border-gray-300 hover:border-gray-400'
             }`}
           >
             <input
@@ -414,12 +377,8 @@ export default function CaptureZone() {
 
             <div className="space-y-2">
               <div className="text-4xl">📸</div>
-              <p className="text-lg font-medium text-gray-900">
-                Drop screenshots here
-              </p>
-              <p className="text-sm text-gray-500">
-                or click to select files
-              </p>
+              <p className="text-lg font-medium text-gray-900">Drop screenshots here</p>
+              <p className="text-sm text-gray-500">or click to select files</p>
             </div>
           </div>
 
@@ -464,7 +423,8 @@ export default function CaptureZone() {
                 <button
                   onClick={() => submitLink()}
                   disabled={!linkUrl.trim() || linkLoading}
-                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900 text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Save link"
                 >
                   {linkLoading ? (
                     <svg
@@ -550,7 +510,10 @@ export default function CaptureZone() {
       {/* Type Selector Popup - shown over everything */}
       {showTypePopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+          <div
+            className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="mb-4 text-lg font-semibold text-gray-900">What are you looking for?</h3>
 
             {/* Image Preview in Popup */}
@@ -654,11 +617,11 @@ export default function CaptureZone() {
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium text-gray-900">
-                {previewImages.length === 1 ? 'Screenshot ready' : `${previewImages.length} screenshots ready`}
+                {previewImages.length === 1
+                  ? 'Screenshot ready'
+                  : `${previewImages.length} screenshots ready`}
               </p>
-              <p className="text-xs text-gray-500">
-                Add a hint or retry analysis when ready.
-              </p>
+              <p className="text-xs text-gray-500">Add a hint or retry analysis when ready.</p>
             </div>
           </div>
           <div className="grid grid-cols-3 gap-2">
@@ -690,7 +653,6 @@ export default function CaptureZone() {
           <TranscriptionPreview
             transcription={transcription}
             onSaveAsNote={saveAsNote}
-            onResearch={researchTranscription}
             onCancel={cancelTranscription}
             isProcessing={isProcessing}
           />
@@ -734,9 +696,7 @@ export default function CaptureZone() {
       {/* Results */}
       {results.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Results ({results.length})
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-900">Results ({results.length})</h2>
           <div className="grid gap-4 sm:grid-cols-2">
             {results.map((discovery) => (
               <DiscoveryCard key={discovery.id} discovery={discovery} />

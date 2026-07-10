@@ -20,9 +20,7 @@ export default function PendingCaptures({
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-medium text-amber-900">
-          Pending ({captures.length})
-        </h3>
+        <h3 className="font-medium text-amber-900">Pending ({captures.length})</h3>
         {isSyncing && (
           <span className="flex items-center gap-2 text-sm text-amber-700">
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-700" />

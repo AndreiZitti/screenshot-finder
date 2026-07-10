@@ -80,9 +80,13 @@ export default function LinkCard({ link, onDelete }: LinkCardProps) {
         {/* Thumbnail */}
         {link.thumbnail && (
           <div className="aspect-video w-full overflow-hidden">
+            {/* Dynamic third-party preview hosts cannot be safely allowlisted for next/image. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={link.thumbnail}
               alt={link.name}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover"
             />
           </div>
@@ -92,7 +96,9 @@ export default function LinkCard({ link, onDelete }: LinkCardProps) {
           {/* Header with platform badge and action buttons */}
           <div className="mb-3 flex items-start justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${PLATFORM_COLORS[link.platform]}`}>
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${PLATFORM_COLORS[link.platform]}`}
+              >
                 {PLATFORM_LABELS[link.platform]}
               </span>
             </div>
@@ -109,7 +115,8 @@ export default function LinkCard({ link, onDelete }: LinkCardProps) {
                   setIsEditingNotes(!isEditingNotes);
                   if (!isEditingNotes) setNotesValue(savedNotes);
                 }}
-                className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                aria-label="Add or edit notes"
                 title="Add/edit notes"
               >
                 <svg
@@ -130,7 +137,8 @@ export default function LinkCard({ link, onDelete }: LinkCardProps) {
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
-                className="shrink-0 rounded p-2 sm:p-1 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded p-2 text-gray-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                aria-label="Delete from stash"
                 title="Delete from library"
               >
                 <svg
@@ -152,14 +160,10 @@ export default function LinkCard({ link, onDelete }: LinkCardProps) {
           </div>
 
           {/* Title */}
-          <h3 className="mb-2 text-lg font-semibold text-gray-900">
-            {link.name}
-          </h3>
+          <h3 className="mb-2 text-lg font-semibold text-gray-900">{link.name}</h3>
 
           {/* URL domain */}
-          <p className="mb-2 text-xs text-gray-400">
-            {extractHostname(link.url)}
-          </p>
+          <p className="mb-2 text-xs text-gray-400">{extractHostname(link.url)}</p>
 
           {/* Tags */}
           {link.tags && link.tags.length > 0 && (

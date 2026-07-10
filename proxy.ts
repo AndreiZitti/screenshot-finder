@@ -1,11 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { type NextRequest, NextResponse } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
-const ALLOWED_ORIGINS = [
-  'https://stash.zitti.ro',
-  'https://zitti.ro',
-  'https://www.zitti.ro',
-];
+const ALLOWED_ORIGINS = ['https://stash.zitti.ro', 'https://zitti.ro', 'https://www.zitti.ro'];
 
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
@@ -17,11 +13,14 @@ function isAllowedOrigin(origin: string | null): boolean {
 function setCorsHeaders(response: NextResponse, origin: string) {
   response.headers.set('Access-Control-Allow-Origin', origin);
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-gemini-api-key');
+  response.headers.set(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, x-gemini-api-key',
+  );
   response.headers.set('Access-Control-Max-Age', '86400');
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const origin = request.headers.get('origin');
 
@@ -37,11 +36,11 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  return await updateSession(request);
+  return updateSession(request);
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

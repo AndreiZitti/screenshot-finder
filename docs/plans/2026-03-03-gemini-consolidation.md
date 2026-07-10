@@ -13,6 +13,7 @@
 ### Task 1: Update Gemini Client with Combined Vision + Search
 
 **Files:**
+
 - Modify: `lib/gemini.ts`
 
 **Step 1: Add the new `analyzeImage` function**
@@ -23,7 +24,7 @@ Add this function to `lib/gemini.ts`:
 export async function analyzeImage(
   imageBase64: string,
   mimeType: string,
-  type: DiscoveryType
+  type: DiscoveryType,
 ): Promise<{ name: string } & DiscoveryInfo> {
   const model = getSearchModel();
 
@@ -100,6 +101,7 @@ git commit -m "feat: add analyzeImage function combining vision + search"
 ### Task 2: Update Analyze API Route
 
 **Files:**
+
 - Modify: `app/api/analyze/route.ts`
 
 **Step 1: Update imports and replace Groq calls with Gemini**
@@ -115,13 +117,12 @@ import { Discovery, DiscoveryType } from '@/types/discovery';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const formData = await request.formData();
@@ -129,10 +130,7 @@ export async function POST(request: NextRequest) {
     const type = (formData.get('type') as DiscoveryType) || 'series';
 
     if (images.length === 0) {
-      return NextResponse.json(
-        { error: 'No images provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No images provided' }, { status: 400 });
     }
 
     // Limit file sizes (max 10MB per image)
@@ -141,7 +139,7 @@ export async function POST(request: NextRequest) {
       if (image.size > MAX_FILE_SIZE) {
         return NextResponse.json(
           { error: `Image ${image.name} exceeds 10MB limit` },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -185,10 +183,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ results });
   } catch (error) {
     console.error('Analyze error:', error);
-    return NextResponse.json(
-      { error: 'Failed to analyze images' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to analyze images' }, { status: 500 });
   }
 }
 ```
@@ -210,6 +205,7 @@ git commit -m "feat: use Gemini for combined vision + search, fix MIME type bug"
 ### Task 3: Create Unified Transcription Module
 
 **Files:**
+
 - Create: `lib/transcribe.ts`
 
 **Step 1: Create the transcription module with fallback**
@@ -303,6 +299,7 @@ git commit -m "feat: add unified transcription with Groq/Gemini fallback"
 ### Task 4: Update Transcribe API Route
 
 **Files:**
+
 - Modify: `app/api/transcribe/route.ts`
 
 **Step 1: Read current file**
@@ -321,23 +318,19 @@ import { createClient } from '@/lib/supabase/server';
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const formData = await request.formData();
     const audio = formData.get('audio') as File;
 
     if (!audio) {
-      return NextResponse.json(
-        { error: 'No audio provided' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No audio provided' }, { status: 400 });
     }
 
     const buffer = Buffer.from(await audio.arrayBuffer());
@@ -348,10 +341,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ text });
   } catch (error) {
     console.error('Transcribe error:', error);
-    return NextResponse.json(
-      { error: 'Failed to transcribe audio' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to transcribe audio' }, { status: 500 });
   }
 }
 ```
@@ -373,6 +363,7 @@ git commit -m "feat: use unified transcription module in API route"
 ### Task 5: Merge Settings Features into Connections Page
 
 **Files:**
+
 - Modify: `app/connections/page.tsx`
 - Modify: `hooks/useNotionConnections.ts` (if needed)
 
@@ -383,6 +374,7 @@ Read `hooks/useNotionConnections.ts` to verify `setDefault` function exists and 
 **Step 2: Add "Set as Default" to ConnectionCard in connections page**
 
 Update the `ConnectionCard` component in `app/connections/page.tsx` to include:
+
 - `is_default` badge display
 - "Set as Default" button (checkmark icon)
 - Call to `setDefault(connection.id)` on click
@@ -434,6 +426,7 @@ git commit -m "feat: add Set as Default to connections page"
 ### Task 6: Delete Old Files
 
 **Files:**
+
 - Delete: `app/settings/page.tsx`
 - Delete: `lib/groq.ts`
 
@@ -482,6 +475,7 @@ Expected: Build succeeds with no errors
 Run: `npm run dev`
 
 Test checklist:
+
 - [ ] Upload JPEG image → analyzes correctly
 - [ ] Upload PNG image → analyzes correctly (bug fix verified)
 - [ ] Record voice note → transcribes
@@ -501,12 +495,12 @@ git commit -m "fix: address issues from testing"
 
 ## Summary
 
-| Task | Description |
-|------|-------------|
-| 1 | Add `analyzeImage()` to gemini.ts |
-| 2 | Update analyze API route |
-| 3 | Create unified transcription module |
-| 4 | Update transcribe API route |
-| 5 | Add Set as Default to connections |
-| 6 | Delete old files |
-| 7 | Final verification |
+| Task | Description                         |
+| ---- | ----------------------------------- |
+| 1    | Add `analyzeImage()` to gemini.ts   |
+| 2    | Update analyze API route            |
+| 3    | Create unified transcription module |
+| 4    | Update transcribe API route         |
+| 5    | Add Set as Default to connections   |
+| 6    | Delete old files                    |
+| 7    | Final verification                  |

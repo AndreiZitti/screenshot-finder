@@ -74,7 +74,11 @@ const TYPE_LABELS: Record<DiscoveryType, string> = {
   other: 'topic',
 };
 
-export async function getDiscoveryInfo(name: string, type: DiscoveryType, apiKey?: string): Promise<DiscoveryInfo> {
+export async function getDiscoveryInfo(
+  name: string,
+  type: DiscoveryType,
+  apiKey?: string,
+): Promise<DiscoveryInfo> {
   const model = getSearchModel(apiKey);
 
   const prompt = `Search the web for "${name}" (${TYPE_LABELS[type]}).
@@ -110,7 +114,7 @@ export async function analyzeImage(
   mimeType: string,
   type: DiscoveryType,
   hint?: string,
-  apiKey?: string
+  apiKey?: string,
 ): Promise<{ name: string } & DiscoveryInfo> {
   const model = getVisionModel(apiKey);
 

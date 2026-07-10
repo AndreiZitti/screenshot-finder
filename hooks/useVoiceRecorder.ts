@@ -37,10 +37,10 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : MediaRecorder.isTypeSupported('audio/webm')
-        ? 'audio/webm'
-        : MediaRecorder.isTypeSupported('audio/mp4')
-        ? 'audio/mp4'
-        : 'audio/wav';
+          ? 'audio/webm'
+          : MediaRecorder.isTypeSupported('audio/mp4')
+            ? 'audio/mp4'
+            : 'audio/wav';
 
       const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
@@ -57,7 +57,7 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
         setState('stopped');
 
         // Stop all tracks
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
 
         // Clear timer
         if (timerRef.current) {
@@ -69,7 +69,7 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
       mediaRecorder.onerror = () => {
         setError('Recording failed');
         setState('idle');
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       // Start recording
@@ -82,7 +82,6 @@ export function useVoiceRecorder(): UseVoiceRecorderReturn {
       timerRef.current = setInterval(() => {
         setDuration(Math.floor((Date.now() - startTimeRef.current) / 1000));
       }, 100);
-
     } catch (err) {
       if (err instanceof DOMException && err.name === 'NotAllowedError') {
         setError('Microphone access denied. Please allow microphone access.');

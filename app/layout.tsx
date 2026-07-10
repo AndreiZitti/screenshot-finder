@@ -5,13 +5,46 @@ import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
 import { AuthProvider } from '@/lib/auth/auth-context';
 import { ToastProvider } from '@/contexts/ToastContext';
+import { NotionConnectionsProvider } from '@/contexts/NotionConnectionsContext';
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'z-stash',
-  description: 'Capture inbox for knowledge and ideas',
+  metadataBase: new URL('https://stash.zitti.ro'),
+  title: {
+    default: 'z-stash',
+    template: '%s · z-stash',
+  },
+  description:
+    'Turn screenshots, links, and voice notes into an AI-enriched personal knowledge stash.',
   manifest: '/manifest.json',
+  applicationName: 'z-stash',
+  icons: {
+    icon: '/icons/icon.svg',
+    apple: '/icons/icon-192.png',
+  },
+  openGraph: {
+    title: 'z-stash',
+    description: 'A mobile-first capture inbox for screenshots, links, and voice notes.',
+    url: '/',
+    siteName: 'z-stash',
+    type: 'website',
+    images: [
+      {
+        url: '/og.jpg',
+        width: 1280,
+        height: 720,
+        alt: 'z-stash capture screen',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'z-stash',
+    description: 'A mobile-first capture inbox for screenshots, links, and voice notes.',
+    images: ['/og.jpg'],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -29,11 +62,7 @@ export const viewport: Viewport = {
   themeColor: '#111827',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -41,13 +70,16 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} bg-gray-50 text-gray-900 antialiased`}>
         <AuthProvider>
-          <ToastProvider>
-            <Header />
-            <main className="mx-auto max-w-5xl px-4 py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-8">
-              {children}
-            </main>
-            <BottomNav />
-          </ToastProvider>
+          <NotionConnectionsProvider>
+            <ToastProvider>
+              <Header />
+              <main className="mx-auto max-w-5xl px-4 py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:pb-8">
+                {children}
+              </main>
+              <BottomNav />
+              <ServiceWorkerRegistration />
+            </ToastProvider>
+          </NotionConnectionsProvider>
         </AuthProvider>
       </body>
     </html>
